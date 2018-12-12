@@ -2,15 +2,15 @@
 
 ## overview:
 
-#### usage:
+### usage:
 `beluga-cli <command> [arguments]`
 
-#### description:
+### description:
 beluga-cli is a bash utility which uses [curl](https://curl.haxx.se/) - with the exception of the `ftp` command, which uses [ftp](https://www.gnu.org/software/inetutils/)\* - to efficiently manipulate files on an ftp origin server (like the one provided by beluga) and interact with the belugacdn api. it can be used to quickly accomplish, and/or as a step in the automation of, many tasks involving the manipulation of files stored on an ftp origin and accessible to the public via [belugacdn](http://www.belugacdn.com/).
 
 \*if you are running mac os 10.13 or newer and do not have a command line ftp client installed but wish to use this command, you can install ftp by running the following [homebrew](https://brew.sh/) command: `brew install tnftp`.
 
-#### setup:
+### setup:
 in order to get everything working correctly before you start using beluga-cli, run the command `beluga-cli setup` to define the location and credentials used for your origin, the credentials used for belugacdn, and so on.  
 
 **caution:** your origin server username and password will be stored & transmitted as plain text, so ensure they are not used elsewhere.
@@ -19,7 +19,7 @@ if you would like to be able to run the utility by typing `beluga-cli` no matter
 
 ## possible commands:
 
-#### file manipulation:
+### file manipulation:
 
 if `+iv` is included when running one of these commands, after completing the operation beluga-cli will invalidate any cdn uris that were modified. for more information about when this may be useful, see [origin vs cdn](#origin-vs-cdn).
 
@@ -32,7 +32,7 @@ usage: `beluga-cli mv [+iv] <localpath> <cdn://uri> or <cdn://uri> <localpath> o
 **rm** : delete a remote file.  
 usage: `beluga-cli rm [+iv] <cdn://uri>`
 
-#### navigation & file discovery:
+### navigation & file discovery:
 
 **ftp** : log on to the origin server in an interactive ftp session.  
 usage: `beluga-cli ftp`
@@ -43,7 +43,7 @@ usage: `beluga-cli ls <cdn://uri>`
 **ll** : list the contents of a directory plus permissions, creation date, etc.  
 usage: `beluga-cli ll <cdn://uri>`
 
-#### cdn utilities:
+### cdn utilities:
 
 **iv** : invalidate a file in the cdn's cache, so that another copy must be retrieved from the origin server.  
 usage: `beluga-cli iv <cdn://uri>`
@@ -102,14 +102,14 @@ the following examples should help to demonstrate what normal input and output l
 
 ## tips & tricks:
 
-#### help:
+### help:
 you can include the word `help` after any command for a quick refresher about the use of that particular command, or by itself (`beluga-cli help`) to get a general help page like this one.
 
-#### setup:
+### setup:
 the "origin server location" in `beluga-cli setup` should include the entire path used as the origin on belugacdn. if you entered an additional path in your property's settings page on beluga, include it here. if you use beluga's origin solution, this may also include a directory with your property name (e.g. X.X.X.X/cdn.your.site/).
 
-#### remote uri formatting:
+### remote uri formatting:
 note that in all commands, remote uris should be be formatted as cdn://path. for instance, in order to download the file http://cdn.your.site/dir1/file.txt, you could run the command `beluga-cli cp cdn://dir1/file.txt ~/file.txt`. as a general rule, cdn://path/to/obj corresponds to http://cdn.your.site/path/to/obj.
 
-#### origin vs cdn:
+### origin vs cdn:
 when making changes to files on the origin server, note that the differences may not propagate to the cdn (and therefore become public) until you invalidate the existing uri of the modified file. this includes any operation on a uri that has already been used before: uploading a file to a new uri doesn't require invalidation, but deleting an existing one does.
