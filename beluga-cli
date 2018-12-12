@@ -11,71 +11,73 @@
 # attempts to constrain status messages to fit the current terminal size, by
 # replacing certain substrings with shorter aliases, etc
 display_message ( ) {
-  IFS=$'\n'
-  for line in $1; do
-    if [[ `echo -e $line | sed "s,$(printf '\033')\\[[0-9;]*[a-zA-Z],,g" | awk '{print length}'` -gt $(tput cols) ]]; then
-      if [[ $line != ${line//$HOME/\~} ]]; then
-        line=${line//$HOME/\~}
-      else
-        if [[ ${local:0:1} == '/' ]]; then
-          addpwd=${line//$local/$(pwd)$local}
+  if [[ ! $inputflags =~ 's' ]]; then
+    IFS=$'\n'
+    for line in $1; do
+      if [[ `echo -e $line | sed "s,$(printf '\033')\\[[0-9;]*[a-zA-Z],,g" | awk '{print length}'` -gt $(tput cols) ]]; then
+        if [[ $line != ${line//$HOME/\~} ]]; then
+          line=${line//$HOME/\~}
         else
-          addpwd=${line//$local/$(pwd)/$local}
-        fi
-
-        if [[ ${#line} -gt ${#addpwd} ]]; then
-          line=$addpwd
-        fi
-      fi
-
-      if [[ `echo -e $line | sed "s,$(printf '\033')\\[[0-9;]*[a-zA-Z],,g" | awk '{print length}'` -gt $(tput cols) ]]; then
-        if [[ $line =~ "http://$cdnurl" ]]; then
-          line=${line//http:\/\/$cdnurl/cdn:/}
-        fi
-      fi
-
-      if [[ `echo -e $line | sed "s,$(printf '\033')\\[[0-9;]*[a-zA-Z],,g" | awk '{print length}'` -gt $(tput cols) ]]; then
-        shortl=''
-        IFS=' '
-        for part in $line; do
-          if [[ `echo $part | tr -dc '/' | awk '{print length}'` -gt 1 ]]; then
-            if [[ $(echo $part | cut -d'/' -f $(expr $(echo $part | tr -dc '/' | awk '{print length}') + 1 )) == '' ]]; then
-              if [[ ${part:0:1} == '/' ]]; then
-                newpart=$(echo $part | cut -d'/' -f 2)'/.../'$(echo $part | cut -d'/' -f $(echo $part | tr -dc '/' | awk '{print length}'))'/'
-              else
-                if [[ ${part:0:6} == 'cdn://' ]]; then
-                  newpart=$(echo $part | cut -d'/' -f 1)'//.../'$(echo $part | cut -d'/' -f $(echo $part | tr -dc '/' | awk '{print length}'))'/'
-                else
-                  newpart=$(echo $part | cut -d'/' -f 1)'/.../'$(echo $part | cut -d'/' -f $(echo $part | tr -dc '/' | awk '{print length}'))'/'
-                fi
-              fi
-            else
-              if [[ ${part:0:1} == '/' ]]; then
-                newpart=$(echo $part | cut -d'/' -f 2)'/.../'$(echo $part | cut -d'/' -f $(expr $(echo $part | tr -dc '/' | awk '{print length}') + 1))
-              else
-                if [[ ${part:0:6} == 'cdn://' ]]; then
-                  newpart=$(echo $part | cut -d'/' -f 1)'//.../'$(echo $part | cut -d'/' -f $(expr $(echo $part | tr -dc '/' | awk '{print length}') + 1))
-                else
-                  newpart=$(echo $part | cut -d'/' -f 1)'/.../'$(echo $part | cut -d'/' -f $(expr $(echo $part | tr -dc '/' | awk '{print length}') + 1))
-                fi
-              fi
-            fi
-            shortl+="$newpart "
+          if [[ ${local:0:1} == '/' ]]; then
+            addpwd=${line//$local/$(pwd)$local}
           else
-            shortl+="$part "
+            addpwd=${line//$local/$(pwd)/$local}
           fi
-        done
-        shortl=`echo $shortl | awk '{$1=$1};1'`
 
-        if [[ `echo -e $shortl | sed "s,$(printf '\033')\\[[0-9;]*[a-zA-Z],,g" | awk '{print length}'` -lt $(tput cols) ]]; then
-          line=$shortl
-        else
-          line=${shortl:0:$(expr $(tput cols) + ${#shortl} - $(echo -e $shortl | sed "s,$(printf '\033')\\[[0-9;]*[a-zA-Z],,g" | awk '{print length}') - 3)}'...'
+          if [[ ${#line} -gt ${#addpwd} ]]; then
+            line=$addpwd
+          fi
+        fi
+
+        if [[ `echo -e $line | sed "s,$(printf '\033')\\[[0-9;]*[a-zA-Z],,g" | awk '{print length}'` -gt $(tput cols) ]]; then
+          if [[ $line =~ "http://$cdnurl" ]]; then
+            line=${line//http:\/\/$cdnurl/cdn:/}
+          fi
+        fi
+
+        if [[ `echo -e $line | sed "s,$(printf '\033')\\[[0-9;]*[a-zA-Z],,g" | awk '{print length}'` -gt $(tput cols) ]]; then
+          shortl=''
+          IFS=' '
+          for part in $line; do
+            if [[ `echo $part | tr -dc '/' | awk '{print length}'` -gt 1 ]]; then
+              if [[ $(echo $part | cut -d'/' -f $(expr $(echo $part | tr -dc '/' | awk '{print length}') + 1 )) == '' ]]; then
+                if [[ ${part:0:1} == '/' ]]; then
+                  newpart=$(echo $part | cut -d'/' -f 2)'/.../'$(echo $part | cut -d'/' -f $(echo $part | tr -dc '/' | awk '{print length}'))'/'
+                else
+                  if [[ ${part:0:6} == 'cdn://' ]]; then
+                    newpart=$(echo $part | cut -d'/' -f 1)'//.../'$(echo $part | cut -d'/' -f $(echo $part | tr -dc '/' | awk '{print length}'))'/'
+                  else
+                    newpart=$(echo $part | cut -d'/' -f 1)'/.../'$(echo $part | cut -d'/' -f $(echo $part | tr -dc '/' | awk '{print length}'))'/'
+                  fi
+                fi
+              else
+                if [[ ${part:0:1} == '/' ]]; then
+                  newpart=$(echo $part | cut -d'/' -f 2)'/.../'$(echo $part | cut -d'/' -f $(expr $(echo $part | tr -dc '/' | awk '{print length}') + 1))
+                else
+                  if [[ ${part:0:6} == 'cdn://' ]]; then
+                    newpart=$(echo $part | cut -d'/' -f 1)'//.../'$(echo $part | cut -d'/' -f $(expr $(echo $part | tr -dc '/' | awk '{print length}') + 1))
+                  else
+                    newpart=$(echo $part | cut -d'/' -f 1)'/.../'$(echo $part | cut -d'/' -f $(expr $(echo $part | tr -dc '/' | awk '{print length}') + 1))
+                  fi
+                fi
+              fi
+              shortl+="$newpart "
+            else
+              shortl+="$part "
+            fi
+          done
+          shortl=`echo $shortl | awk '{$1=$1};1'`
+
+          if [[ `echo -e $shortl | sed "s,$(printf '\033')\\[[0-9;]*[a-zA-Z],,g" | awk '{print length}'` -lt $(tput cols) ]]; then
+            line=$shortl
+          else
+            line=${shortl:0:$(expr $(tput cols) + ${#shortl} - $(echo -e $shortl | sed "s,$(printf '\033')\\[[0-9;]*[a-zA-Z],,g" | awk '{print length}') - 3)}'...'
+          fi
         fi
       fi
-    fi
-    echo -e $line
-  done
+      echo -e $line
+    done
+  fi
 }
 
 # usage: validate_curl_result <result>
@@ -106,7 +108,7 @@ validate_curl_result ( ) {
     else
       msg="\033[31;1mfailed:\033[0m operation not completed [error $res]"
     fi
-    echo "$msg"
+    echo -e "$msg"
     return 1
   else
     echo -e "\033[1;92mdone\033[0m"
@@ -155,64 +157,66 @@ center_text ( ) {
 #
 # it should work fine with all ANSI color codes.
 word_wrap ( ) {
-  IFS=' '
-  maxlength=$1
+  if [[ ! $inputflags =~ 's' ]]; then
+    IFS=' '
+    maxlength=$1
 
-  if [[ $2 =~ '-' ]]; then
-    tab=$(echo $2 | cut -d'-' -f2 )
-    start=$(echo $2 | cut -d'-' -f1 )
-    starttab=0
-    if [[ $start == 'a' ]]; then
-      start=1
-      mode='append'
-    elif [[ $start =~ ':' ]]; then
-      start=$(echo $2 | cut -d'-' -f1 | cut -d':' -f1)
-      starttab=$(echo $2 | cut -d'-' -f1 | cut -d':' -f2)
-    fi
-  else
-    tab=$2
-    start=0
-  fi
-
-  curritems=( $(echo -e $@) )
-  currline=${curritems[2]}
-
-  linenum=1
-  for word in ${curritems[@]:3}; do
-    if [[ $linenum -gt $start ]] || [[ $mode == 'append' ]]; then
-      max=$(expr $maxlength - $tab)
-    else
-      max=$(expr $maxlength - $starttab)
-    fi
-
-    if [[ $(echo "$currline $word" | sed "s,$(printf '\033')\\[[0-9;]*[a-zA-Z],,g" | awk '{print length}') -lt $max ]]; then
-      currline="$currline $word"
-    else
-      if [[ $linenum -gt $start ]]; then
-        for ((n=0;n<$tab;n++)); do
-          echo -n ' '
-        done
-      else
-        for ((n=0;n<$starttab;n++)); do
-          echo -n ' '
-        done
+    if [[ $2 =~ '-' ]]; then
+      tab=$(echo $2 | cut -d'-' -f2 )
+      start=$(echo $2 | cut -d'-' -f1 )
+      starttab=0
+      if [[ $start == 'a' ]]; then
+        start=1
+        mode='append'
+      elif [[ $start =~ ':' ]]; then
+        start=$(echo $2 | cut -d'-' -f1 | cut -d':' -f1)
+        starttab=$(echo $2 | cut -d'-' -f1 | cut -d':' -f2)
       fi
-      echo -e $currline
-      currline=$word
-      let linenum++
+    else
+      tab=$2
+      start=0
     fi
-  done
 
-  if [[ $linenum -gt $start ]]; then
-    for ((n=0;n<$tab;n++)); do
-      echo -n ' '
+    curritems=( $(echo -e $@) )
+    currline=${curritems[2]}
+
+    linenum=1
+    for word in ${curritems[@]:3}; do
+      if [[ $linenum -gt $start ]] || [[ $mode == 'append' ]]; then
+        max=$(expr $maxlength - $tab)
+      else
+        max=$(expr $maxlength - $starttab)
+      fi
+
+      if [[ $(echo "$currline $word" | sed "s,$(printf '\033')\\[[0-9;]*[a-zA-Z],,g" | awk '{print length}') -lt $max ]]; then
+        currline="$currline $word"
+      else
+        if [[ $linenum -gt $start ]]; then
+          for ((n=0;n<$tab;n++)); do
+            echo -n ' '
+          done
+        else
+          for ((n=0;n<$starttab;n++)); do
+            echo -n ' '
+          done
+        fi
+        echo -e $currline
+        currline=$word
+        let linenum++
+      fi
     done
-  else
-    for ((n=0;n<$starttab;n++)); do
-      echo -n ' '
-    done
+
+    if [[ $linenum -gt $start ]]; then
+      for ((n=0;n<$tab;n++)); do
+        echo -n ' '
+      done
+    else
+      for ((n=0;n<$starttab;n++)); do
+        echo -n ' '
+      done
+    fi
+    echo $currline
   fi
-  echo $currline
 }
 
 # usage: display_help_page (or can be piped through less for manpage-like
@@ -223,25 +227,33 @@ display_help_page ( ) {
   echo
   center_text "\033[1mextended help for beluga-cli\033[0m"
   echo
-  echo -e "\n \033[1;4musage\033[0;1m:\033[0m \033[37mbeluga-cli\033[0m <\033[37mcommand\033[0m> [\033[37marguments\033[0m]\n"
+  echo -e "\n \033[1;4musage\033[0;1m:\033[0m \033[37mbeluga-cli\033[0m <\033[37mcommand\033[0m> [\033[37m-is\033[0m] [\033[37marguments\033[0m]\n"
   echo -e " \033[1;4moverview\033[0;1m:\033[0m"
   echo
   word_wrap $(expr $(tput cols) - 5) 5 "beluga-cli is a bash utility which uses \033[4mcurl(1)\033[0m - with the exception of the ftp command, which uses \033[4mftp(1)\033[0m - to efficiently manipulate files on an ftp origin server (like the one provided by beluga) and interact with the belugacdn api. it can be used to quickly accomplish, and/or as a step in the automation of, many tasks involving the manipulation of files stored on an ftp origin server and accessed through belugacdn (\033[4mhttp://www.belugacdn.com/\033[0m)."
+  echo -e "\n \033[1;4mpossible flags\033[0;1m:\033[0m"
+  echo
+  echo -en "     \033[1m-i\033[0m     "
+  word_wrap $(expr $(tput cols) - 5) a-12 "if a remote file may be modified by the specified command, beluga-cli will request invalidation of that uri after the operation is complete."
+  echo
+  echo -en "     \033[1m-s\033[0m     "
+  word_wrap $(expr $(tput cols) - 5) a-12 "the program will run silently."
+  echo
+  word_wrap $(expr $(tput cols) - 5) 5 "each flag can only be used on certain commands. if a flag is used on a command where it is not standard, beluga-cli will generally print an error message but then ignore the flag and continue."
   echo -e "\n \033[1;4mpossible commands\033[0;1m:\033[0m"
   echo
   center_text "\033[1mfile manipulation\033[0m\n"
-  word_wrap $(expr $(tput cols) - 5) 5 "if +iv is included when running one of these commands, after completing the operation beluga-cli will invalidate any cdn uris that were modified. for more info, see \033[4morigin vs cdn\033[0m in the \033[4mtips and tricks\033[0m section of this page."
   echo
   echo -en "     \033[1mcp\033[0m     "
   word_wrap $(expr $(tput cols) - 5) a-12 "upload or download a file, resulting in duplicate copies at the origin and destination."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mcp \033[0m[\033[37m+iv\033[0m] <\033[37mlocalpath\033[0m> <\033[37mcdn://uri\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mlocalpath\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mcdn://uri\033[0m>"
+  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mcp \033[0m[\033[37m-is\033[0m] <\033[37mlocalpath\033[0m> <\033[37mcdn://uri\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mlocalpath\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mcdn://uri\033[0m>"
   echo
   echo -en "     \033[1mmv\033[0m     "
   word_wrap $(expr $(tput cols) - 5) a-12 "move a file to, from, or within the server, so that the original copy is deleted and only the new one at the destination is kept."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mmv \033[0m[\033[37m+iv\033[0m] <\033[37mlocalpath\033[0m> <\033[37mcdn://uri\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mlocalpath\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mcdn://uri\033[0m>"
+  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mmv \033[0m[\033[37m-is\033[0m] <\033[37mlocalpath\033[0m> <\033[37mcdn://uri\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mlocalpath\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mcdn://uri\033[0m>"
   echo
   echo -e "     \033[1mrm\033[0m     delete a remote file."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mrm \033[0m[\033[37m+iv\033[0m] <\033[37mcdn://uri\033[0m>"
+  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mrm \033[0m[\033[37m-is\033[0m] <\033[37mcdn://uri\033[0m>"
   echo
   echo
   center_text "\033[1mnavigation/file discovery\033[0m"
@@ -261,7 +273,7 @@ display_help_page ( ) {
   center_text "\033[1mcdn utilities\033[0m\n"
   echo -en "     \033[1miv\033[0m     "
   word_wrap $(expr $(tput cols) - 5) a-12 "invalidate a file in the cdn's cache, so that another copy must be retrieved from the origin server."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37miv\033[0m <\033[37mcdn://uri\033[0m>"
+  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37miv\033[0m \033[0m[\033[37m-s\033[0m] <\033[37mcdn://uri\033[0m>"
   echo
   echo
   echo -e " \033[1;4mbrief examples\033[0;1m:\033[0m"
@@ -276,7 +288,7 @@ display_help_page ( ) {
   echo
   word_wrap $(expr $(tput cols) - 5) 1:5-8 "2. replace an online file with an updated local copy, then request invalidation so the update becomes visible on the cdn:"
   echo
-  word_wrap $(expr $(tput cols) - 5) 8 "\$ \033[37mbeluga-cli \033[37mcp \033[37m+iv \033[37mwork/progressreport.pdf \033[37mcdn://reports/2018.pdf\033[0m"
+  word_wrap $(expr $(tput cols) - 5) 8 "\$ \033[37mbeluga-cli \033[37mcp \033[37m-i \033[37mwork/progressreport.pdf \033[37mcdn://reports/2018.pdf\033[0m"
   word_wrap $(expr $(tput cols) - 5) 8 "\033[1;92muploading:\033[0m work/progressreport.pdf -> cdn://reports/2018.pdf"
   word_wrap $(expr $(tput cols) - 5) 8 "\033[1;92mdone\033[0m"
   word_wrap $(expr $(tput cols) - 5) 8 "\033[1;92minvalidating:\033[0m http://cdn.example.com/reports/2018.pdf"
@@ -298,7 +310,7 @@ display_help_page ( ) {
   echo
   word_wrap $(expr $(tput cols) - 5) 1:5-8 "4. use grep and xargs to download every image file (.png or .jpg) in the dir from the previous example to a local directory named 'cdnimg', with 'cp_' prepended to each local filename:"
   echo
-  word_wrap $(expr $(tput cols) - 5) 8 "\$ \033[37mbeluga-cli \033[37mls \033[37mcdn://images \033[37m| \033[37mgrep \033[37m-E \033[37m\"\\.(jpe?g|png)\" \033[37m| \033[37mxargs \033[37m-I \033[37m% \033[37mbeluga-cli \033[37mcp \033[37mcdn://images/% \033[37m~/cdnimg/cp_%\033[0m"
+  word_wrap $(expr $(tput cols) - 5) 8 "\$ \033[37mbeluga-cli \033[37mls \033[37mcdn://images \033[37m 2> /dev/null | \033[37mgrep \033[37m-E \033[37m\"\\.(jpe?g|png)\" \033[37m| \033[37mxargs \033[37m-I \033[37m% \033[37mbeluga-cli \033[37mcp \033[37mcdn://images/% \033[37m~/cdnimg/cp_%\033[0m"
   word_wrap $(expr $(tput cols) - 5) 8 "\033[1;92mdownloading:\033[0m cdn://images/babypic.jpg -> ~/cdnimg/cp_babypic.jpg"
   word_wrap $(expr $(tput cols) - 5) 8 "\033[1;92mdone\033[0m"
   word_wrap $(expr $(tput cols) - 5) 8 "\033[1;92mdownloading:\033[0m cdn://images/logo.png -> ~/cdnimg/cp_logo.png"
@@ -347,7 +359,7 @@ invalidate ( ) {
   myurl=http://$cdnurl/$1
 
   msg="\033[1;92minvalidating:\033[0m $myurl"
-  display_message "$msg"
+  display_message "$msg" >&2
 
   resp=$(curl -s -kH "Content-type: application/json" \
      -H "Accept: application/json" \
@@ -369,20 +381,20 @@ invalidate ( ) {
 
   if [[ $exitstatus -eq 0 ]]; then
     if [[ $curlstatus == "pending" ]]; then
-      word_wrap $(tput cols) 0 "request \033[1;92mpending\033[0m"
+      word_wrap $(tput cols) 0 "request \033[1;92mpending\033[0m" >&2
       return 0
     elif [[ $curlstatus == "previously-pending" ]]; then
-      word_wrap $(tput cols) 0 "request \033[1;33mpreviously pending\033[0m"
+      word_wrap $(tput cols) 0 "request \033[1;33mpreviously pending\033[0m" >&2
       return 2
     elif [[ $curlstatus == "failure" ]]; then
-      word_wrap $(tput cols) 0 "request \033[1;91mfailed\033[0m"
+      word_wrap $(tput cols) 0 "request \033[1;91mfailed\033[0m" >&2
       return 1
     else
-      word_wrap $(tput cols) 0 "request $curlstatus"
+      word_wrap $(tput cols) 0 "request $curlstatus" >&2
       return $exitstatus
     fi
   else
-    word_wrap $(tput cols) 0 "$validationresult"
+    word_wrap $(tput cols) 0 "$validationresult" >&2
     return $exitstatus
   fi
 }
@@ -390,8 +402,8 @@ invalidate ( ) {
 if [[ -e "$HOME/Library/beluga-cli/.defaults" ]]; then
   defaults=( $(cat $HOME/Library/beluga-cli/.defaults) )
   if [[ $(echo -ne "${defaults[0]}\n${defaults[1]}\n${defaults[2]}" | md5) != $(echo ${defaults[3]} | cut -d':' -f2) ]]; then
-    word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1merror:\033[0m config file checksum invalid"
-    word_wrap $(expr $(tput cols) - 1) 1 "run \033[1mbeluga-cli setup\033[0m to set up a new defaults file, or \033[1mbeluga-cli \033[1mhelp\033[0m for more information."
+    word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1merror:\033[0m config file checksum invalid" >&2
+    word_wrap $(expr $(tput cols) - 1) 1 "run \033[1mbeluga-cli setup\033[0m to set up a new defaults file, or \033[1mbeluga-cli \033[1mhelp\033[0m for more information." >&2
     exit 4
   else
     serverdefault=${defaults[0]}
@@ -412,10 +424,10 @@ if [[ -e "$HOME/Library/beluga-cli/.defaults" ]]; then
 fi
 if [[ $1 != "help" && $1 != "setup" ]]; then
   if [[ ! -d "$HOME/Library/beluga-cli" ]]; then
-    word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1merror:\033[0m missing config directory ~/Library/beluga-cli. run \033[1mbeluga-cli setup\033[0m to configure defaults, or \033[1mbeluga-cli \033[1mhelp\033[0m for more information."
+    word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1merror:\033[0m missing config directory ~/Library/beluga-cli. run \033[1mbeluga-cli setup\033[0m to configure defaults, or \033[1mbeluga-cli \033[1mhelp\033[0m for more information." >&2
     exit 4
   elif [[ ! -e "$HOME/Library/beluga-cli/.defaults" ]]; then
-    word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1merror:\033[0m missing config file ~/Library/beluga-cli/.defaults. run \033[1mbeluga-cli setup\033[0m to configure defaults, or \033[1mbeluga-cli \033[1mhelp\033[0m for more information."
+    word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1merror:\033[0m missing config file ~/Library/beluga-cli/.defaults. run \033[1mbeluga-cli setup\033[0m to configure defaults, or \033[1mbeluga-cli \033[1mhelp\033[0m for more information." >&2
     exit 4
   fi
 elif [[ $1 == "setup" ]]; then
@@ -427,169 +439,177 @@ elif [[ $1 == "setup" ]]; then
     chmod +rw-x "$HOME/Library/beluga-cli/.defaults"
   fi
   echo
-  word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1mcaution:\033[0m your origin server username and password will be stored and transmitted as plain text, so ensure they are not used elsewhere."
-  word_wrap $(expr $(tput cols) - 1) 1 "run \033[1mbeluga-cli \033[1mhelp\033[0m and see the section 'setup' for more information on what to enter here."
+  word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1mcaution:\033[0m your origin server username and password will be stored and transmitted as plain text, so ensure they are not used elsewhere." >&2
+  word_wrap $(expr $(tput cols) - 1) 1 "run \033[1mbeluga-cli \033[1mhelp\033[0m and see the section 'setup' for more information on what to enter here." >&2
   echo
-  read -p " origin server location: " serverlocation
-  read -p " origin server username: " susername
-  read -sp " origin server password: " spass
+  read -p " origin server location: " serverlocation </dev/tty
+  read -p " origin server username: " susername </dev/tty
+  read -sp " origin server password: " spass </dev/tty
   echo
-  read -p " cdn url: " cdnurl
-  read -p " belugacdn username: " busername
-  read -sp " belugacdn password: " bpass
+  read -p " cdn url: " cdnurl </dev/tty
+  read -p " belugacdn username: " busername </dev/tty
+  read -sp " belugacdn password: " bpass </dev/tty
   echo
   echo -e "$susername:$spass@$serverlocation\n$(echo -n $busername:$bpass | openssl base64)\n$cdnurl\ncheck:$(echo -ne "$susername:$spass@$serverlocation\n$(echo -n $busername:$bpass | openssl base64)\n$cdnurl" | md5)" > $HOME/Library/beluga-cli/.defaults
   exit 0
 fi
 
+inputflags=''
+
 if [[ -z "$*" ]]; then
-  word_wrap $(expr $(tput cols) - 1) 1 "usage: beluga-cli <command> [arguments]"
-  word_wrap $(expr $(tput cols) - 1) 1 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m."
+  word_wrap $(expr $(tput cols) - 1) 1 "usage: beluga-cli <command> [-is] [arguments]" >&2
+  word_wrap $(expr $(tput cols) - 1) 1 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
+  exit 3
+elif [[ $1 != 'rm' && $1 != 'cp' && $1 != 'mv' && $1 != 'iv' && $1 != 'ls' && $1 != 'll' && $1 != 'ftp' && $1 != 'help' ]]; then
+  word_wrap $(expr $(tput cols) - 1) 1 "usage: beluga-cli <command> [-is] [arguments]" >&2
+  word_wrap $(expr $(tput cols) - 1) 1 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
+  word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m not a valid command: $1" >&2
   exit 3
 else
   count=0
+  args=( )
   for command in $@; do
     if [[ $command == 'rm' || $command == 'cp' || $command == 'mv' || $command == 'iv' || $command == 'ls' || $command == 'll' || $command == 'ftp' ]]; then
       let count+=1
+    elif [[ ${command:0:1} == '-' ]]; then
+      inputflags+=${command/-/}
+    else
+      args=( ${args[@]} $command )
     fi
   done
 
-
-  if [[ $1 == 'help' && $count -gt 0 ]]; then
-    word_wrap $(expr $(tput cols) - 1) 1 "usage: beluga-cli <command> [arguments]"
-    word_wrap $(expr $(tput cols) - 1) 1 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m."
-    word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m use <command> help, not help <command>"
+  if [[ $inputflags != $(echo $inputflags | tr -dc 'is' ) ]]; then
+    word_wrap $(expr $(tput cols) - 1) 1 "usage: beluga-cli <command> [-is] [arguments]" >&2
+    word_wrap $(expr $(tput cols) - 1) 1 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
+    if [[ $(echo $inputflags | tr -d 'is' | awk '{print length}') -gt 1 ]]; then
+      word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m unexpected flags -$(echo $inputflags | tr -d 'is')"
+    else
+      word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m unexpected flag -$(echo $inputflags | tr -d 'is')"
+    fi
     exit 3
-  elif [[ count -gt 1 ]]; then
-    word_wrap $(expr $(tput cols) - 1) 1 "usage: beluga-cli <command> [arguments]"
-    word_wrap $(expr $(tput cols) - 1) 1 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m."
-    word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes multiple commands"
+  elif [[ $1 == 'help' && $count -gt 0 ]]; then
+    word_wrap $(expr $(tput cols) - 1) 1 "usage: beluga-cli <command> [-is] [arguments]" >&2
+    word_wrap $(expr $(tput cols) - 1) 1 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
+    word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m use <command> help, not help <command>" >&2
     exit 3
-  elif [[ count -eq 0 && $1 != 'help' ]]; then
-    word_wrap $(expr $(tput cols) - 1) 1 "usage: beluga-cli <command> [arguments]"
-    word_wrap $(expr $(tput cols) - 1) 1 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m."
-    word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes no commands"
+  elif [[ $count -gt 1 ]]; then
+    word_wrap $(expr $(tput cols) - 1) 1 "usage: beluga-cli <command> [-is] [arguments]" >&2
+    word_wrap $(expr $(tput cols) - 1) 1 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
+    word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes multiple commands" >&2
+    exit 3
+  elif [[ $count -eq 0 && $1 != 'help' ]]; then
+    word_wrap $(expr $(tput cols) - 1) 1 "usage: beluga-cli <command> [-is] [arguments]" >&2
+    word_wrap $(expr $(tput cols) - 1) 1 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
+    word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes no commands" >&2
     exit 3
   fi
 fi
 
-if [[ $1 == 'help' ]]; then
+primarycmd=$1
+
+if [[ $primarycmd == 'help' ]]; then
   display_help_page | less -R
   exit 0
-elif [[ $1 == 'ftp' ]]; then
-  if [[ $2 == 'help' || ${#@} -gt 1 ]]; then
-    word_wrap $(expr $(tput cols) - 1) 1 "usage: beluga-cli ftp"
-    if [[ $2 == 'help' ]]; then
-      word_wrap $(expr $(tput cols) - 1) 1 "logs on to the origin server in an interactive ftp session."
-      word_wrap $(expr $(tput cols) - 1) 1 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m."
+elif [[ $primarycmd == 'ftp' ]]; then
+  if [[ ${#inputflags} -gt 0 ]]; then
+    msg="unexpected flag: -$inputflags"
+    if [[ ${#inputflags} -gt 1 ]]; then
+      msg="unexpected flags: -$inputflags"
+    fi
+
+    if [[ $inputflags =~ 's' ]]; then
+      inputflags=${inputflags//s/}
+    fi
+
+    word_wrap $(tput cols) 1 "$msg" >&2
+  fi
+
+  if [[ ${args[0]} == 'help' || ${#args[@]} -gt 1 ]]; then
+    word_wrap $(expr $(tput cols) - 1) 1 "usage: beluga-cli ftp" >&2
+    if [[ ${args[0]} == 'help' ]]; then
+      word_wrap $(expr $(tput cols) - 1) 1 "logs on to the origin server in an interactive ftp session." >&2
+      word_wrap $(expr $(tput cols) - 1) 1 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
       exit 0
-    elif [[ ${#@} -gt 1 ]]; then
-      word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too many args"
+    elif [[ ${#args[@]} -gt 1 ]]; then
+      word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too many args" >&2
       exit 3
     fi
   fi
 
-  ftp ftp://$serverdefault
+  ftp ftp://$serverdefault/
   exit $?
-elif [[ $1 == 'cp' || $1 == 'mv' || $1 == 'rm' ]]; then
-  if [[ $1 == 'rm' ]]; then
-    if [[ $2 == 'help' || ( ( ${#@} -gt 2 || ${#@} -lt 2 || ${2:0:6} != 'cdn://' ) && $2 != '+iv' ) || ( $2 == '+iv' && ( ${#@} -gt 3 || ${#@} -lt 3 || ${3:0:6} != 'cdn://' ) ) ]]; then
-      word_wrap $(expr $(tput cols) - 1) 1 "usage: beluga-cli rm [+iv] <cdn://uri>"
-      if [[ $2 == 'help' ]]; then
-        word_wrap $(expr $(tput cols) - 1) 1 "deletes a file from the origin server."
-        word_wrap $(expr $(tput cols) - 1) 1 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m."
+elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; then
+  if [[ $primarycmd == 'rm' ]]; then
+    if [[ ${args[0]} == 'help' || ${#args[@]} -gt 1 || ${#args[@]} -lt 1 || ${args[0]:0:6} != 'cdn://' ]]; then
+      word_wrap $(expr $(tput cols) - 1) 1 "usage: beluga-cli rm [-is] <cdn://uri>" >&2
+      if [[ ${args[0]} == 'help' ]]; then
+        word_wrap $(expr $(tput cols) - 1) 1 "deletes a file from the origin server." >&2
+        word_wrap $(expr $(tput cols) - 1) 1 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
         exit 0
-      elif [[ -z $2 ]]; then
-        word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too few args"
-      elif [[ ( ${#@} -gt 2 && $2 != '+iv' ) || ( ${#@} -gt 3 && $2 == '+iv' ) ]]; then
-        word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too many args"
-      elif [[ ( ${2:0:6} != 'cdn://' && $2 != '+iv' ) || ( ${3:0:6} != 'cdn://' && $2 == '+iv' ) ]]; then
-        word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes no cdn:// uri"
+      elif [[ ${#args[@]} -lt 1 ]]; then
+        word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too few args" >&2
+      elif [[ ${#args[@]} -gt 1 ]]; then
+        word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too many args" >&2
+      elif [[ ${args[0]:0:6} != 'cdn://' ]]; then
+        word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes no cdn:// uri" >&2
       fi
       exit 3
     fi
 
-    if [[ $2 == '+iv' ]]; then
-      invalidate=1
-      remote=${3/cdn:\/\//}
-    else
-      invalidate=0
-      remote=${2/cdn:\/\//}
-    fi
-
+    remote=${args[0]/cdn:\/\//}
     curroperation='mv'
-
     local='/dev/null'
     mode="down"
   else
-    curroperation=$1
-    if [[ $2 == 'help' || ( ( ( ${2:0:6} != 'cdn://' && ${3:0:6} != 'cdn://' ) || ${#@} -gt 3 || ${#@} -lt 3 ) && $2 != '+iv' ) || ( ( ( ${3:0:6} != 'cdn://' && ${4:0:6} != 'cdn://' ) || ${#@} -gt 4 || ${#@} -lt 4 ) && $2 == '+iv' ) ]]; then
-      word_wrap $(expr $(tput cols) - 1) 1:1-8 "usage: beluga-cli $1 [+iv] <localpath> <cdn://uri> or <cdn://uri> <localpath> or <cdn://uri> <cdn://uri>"
-      if [[ $2 == 'help' ]]; then
+    curroperation=$primarycmd
+    if [[ ${args[0]} == 'help' || ${#args[@]} -gt 2 || ${#args[@]} -lt 2 || ( ${args[0]:0:6} != 'cdn://' && ${args[1]:0:6} != 'cdn://' ) ]]; then
+      word_wrap $(expr $(tput cols) - 1) 1:1-8 "usage: beluga-cli $1 [-is] <localpath> <cdn://uri> or <cdn://uri> <localpath> or <cdn://uri> <cdn://uri>" >&2
+      if [[ ${args[0]} == 'help' ]]; then
         if [[ $curroperation == 'mv' ]]; then
-          word_wrap $(expr $(tput cols) - 1) 1 "moves a file to, from, or within the origin server: of the source and destination, one or both should be remote uris, formatted with cdn:// preceding the path."
+          word_wrap $(expr $(tput cols) - 1) 1 "moves a file to, from, or within the origin server: of the source and destination, one or both should be remote uris, formatted with cdn:// preceding the path." >&2
         else
-          word_wrap $(expr $(tput cols) - 1) 1 "copies a file to, from, or within the origin server: of the source and destination, one or both should be remote uris, formatted with cdn:// preceding the path."
+          word_wrap $(expr $(tput cols) - 1) 1 "copies a file to, from, or within the origin server: of the source and destination, one or both should be remote uris, formatted with cdn:// preceding the path." >&2
         fi
-        word_wrap $(expr $(tput cols) - 1) 1 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m."
+        word_wrap $(expr $(tput cols) - 1) 1 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
         exit 0
-      elif [[ ( ${#@} -lt 3 && $2 != '+iv' ) || ( ${#@} -lt 4 && $2 == '+iv' ) ]]; then
-        word_wrap $(expr $(tput cols) - 1) 1  "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too few args"
-      elif [[ ( ${2:0:6} != 'cdn://' && ${3:0:6} != 'cdn://' && $2 != '+iv' ) || ( ${3:0:6} != 'cdn://' && ${4:0:6} != 'cdn://' && $2 == '+iv' ) ]]; then
-        word_wrap $(expr $(tput cols) - 1) 1  "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes no cdn:// uri"
-      elif [[ ( ${#@} -gt 3 && $2 != '+iv' ) || ( ${#@} -gt 4 && $2 == '+iv' ) ]]; then
-        word_wrap $(expr $(tput cols) - 1) 1  "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too many args"
+      elif [[ ${#args[@]} -lt 2 ]]; then
+        word_wrap $(expr $(tput cols) - 1) 1  "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too few args" >&2
+      elif [[ ( ${args[0]:0:6} != 'cdn://' && ${args[1]:0:6} != 'cdn://' ) ]]; then
+        word_wrap $(expr $(tput cols) - 1) 1  "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes no cdn:// uri" >&2
+      elif [[ ${#args[@]} -gt 2 ]]; then
+        word_wrap $(expr $(tput cols) - 1) 1  "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too many args" >&2
       fi
       exit 3
     fi
 
-    if [[ $2 == '+iv' ]]; then
-      invalidate=1
-      if [[ ${3:0:6} == 'cdn://' && ${4:0:6} == 'cdn://' ]]; then
-        source=${3/cdn:\/\//}
-        destination=${4/cdn:\/\//}
-        mode="rename"
-      else
-        if [[ ${4:0:6} == 'cdn://' ]]; then
-          local=$3
-          remote=${4/cdn:\/\//}
-          mode="up"
-        elif [[ ${3:0:6} == 'cdn://' ]]; then
-          local=$4
-          remote=${3/cdn:\/\//}
-          mode="down"
-        fi
-      fi
+
+    if [[ ${args[0]:0:6} == 'cdn://' && ${args[1]:0:6} == 'cdn://' ]]; then
+      source=${args[0]/cdn:\/\//}
+      destination=${args[1]/cdn:\/\//}
+      mode="rename"
     else
-      invalidate=0
-      if [[ ${2:0:6} == 'cdn://' && ${3:0:6} == 'cdn://' ]]; then
-        source=${2/cdn:\/\//}
-        destination=${3/cdn:\/\//}
-        mode="rename"
-      else
-        if [[ ${3:0:6} == 'cdn://' ]]; then
-          local=$2
-          remote=${3/cdn:\/\//}
-          mode="up"
-        elif [[ ${2:0:6} == 'cdn://' ]]; then
-          local=$3
-          remote=${2/cdn:\/\//}
-          mode="down"
-        fi
+      if [[ ${args[1]:0:6} == 'cdn://' ]]; then
+        local=${args[0]}
+        remote=${args[1]/cdn:\/\//}
+        mode="up"
+      elif [[ ${args[0]:0:6} == 'cdn://' ]]; then
+        local=${args[1]}
+        remote=${args[0]/cdn:\/\//}
+        mode="down"
       fi
     fi
 
     if [[ $local == '.' ]]; then
       local=$PWD
     elif [[ ${local:0:2} == './' ]]; then
-      local="$PWD/${local:2:$(expr ${#local} - 2)}"
+      local="$PWD/${local:2}"
     fi
   fi
 
   if [[ $mode == "rename" ]]; then
     if [[ -z $source ]]; then
       msg="\033[31;1mfailed:\033[0m http://$cdnurl/ -> http://$cdnurl/$destination"$'\n'"is a directory: http://$cdnurl/"
-      display_message "$msg"
+      display_message "$msg" >&2
       exit 1
     elif [[ ${source:$(expr ${#source} - 1)} == '/' ]]; then
       source=${source:0:$(expr ${#source} - 1)}
@@ -600,7 +620,7 @@ elif [[ $1 == 'cp' || $1 == 'mv' || $1 == 'rm' ]]; then
 
     if [[ $result -eq 0 ]]; then
       msg="\033[31;1mfailed:\033[0m http://$cdnurl/$source/ -> http://$cdnurl/$destination"$'\n'"is a directory: http://$cdnurl/$source/"
-      display_message "$msg"
+      display_message "$msg" >&2
       exit 1
     else
       if [[ ! -z $(echo $source | tr -dc '/') ]]; then
@@ -645,7 +665,7 @@ elif [[ $1 == 'cp' || $1 == 'mv' || $1 == 'rm' ]]; then
         result=$?
       fi
 
-      display_message "$msg"
+      display_message "$msg" >&2
 
       if [[ $result -eq 0 ]]; then
         echo $tempcurloutput | curl -T - "ftp://$serverdefault/$destination" --ftp-create-dirs 2> /dev/null
@@ -655,11 +675,12 @@ elif [[ $1 == 'cp' || $1 == 'mv' || $1 == 'rm' ]]; then
       msg=$(validate_curl_result $result)
       curlstatus=$?
 
-      display_message "$msg"
+      display_message "$msg" >&2
 
       if [[ $curlstatus -eq 0 ]]; then
         invalidate $source
         result1=$?
+
         invalidate $destination
         result2=$?
 
@@ -690,7 +711,7 @@ elif [[ $1 == 'cp' || $1 == 'mv' || $1 == 'rm' ]]; then
         fi
       fi
 
-      display_message "$msg"
+      display_message "$msg" >&2
 
       exit 1
     elif [[ -d $local && $mode == "up" ]]; then
@@ -708,7 +729,7 @@ elif [[ $1 == 'cp' || $1 == 'mv' || $1 == 'rm' ]]; then
         fi
       fi
 
-      display_message "$msg"
+      display_message "$msg" >&2
 
       exit 1
     fi
@@ -725,13 +746,13 @@ elif [[ $1 == 'cp' || $1 == 'mv' || $1 == 'rm' ]]; then
 
       if [[ $result -eq 0 ]]; then
         if [[ $mode == "down" ]]; then
-          if [[ $1 == 'rm' ]]; then
+          if [[ $primarycmd == 'rm' ]]; then
             msg="\033[31;1mfailed:\033[0m deleting http://$cdnurl/$remote/"$'\n'"is a directory: http://$cdnurl/$remote/"
           else
             msg="\033[31;1mfailed:\033[0m http://$cdnurl/$remote/ -> $local"$'\n'"is a directory: http://$cdnurl/$remote/"
           fi
 
-          display_message "$msg"
+          display_message "$msg" >&2
 
           exit 1
         elif [[ $mode == "up" ]]; then
@@ -794,13 +815,13 @@ elif [[ $1 == 'cp' || $1 == 'mv' || $1 == 'rm' ]]; then
           remote=$local
         fi
       elif [[ $mode == "down" ]]; then
-        if [[ $1 == 'rm' ]]; then
+        if [[ $primarycmd == 'rm' ]]; then
           msg="\033[31;1mfailed:\033[0m deleting http://$cdnurl/"$'\n'"is a directory: http://$cdnurl/"
         else
           msg="\033[31;1mfailed:\033[0m http://$cdnurl/ -> $local"$'\n'"is a directory: http://$cdnurl/"
         fi
 
-        display_message "$msg"
+        display_message "$msg" >&2
 
         exit 1
       fi
@@ -881,7 +902,7 @@ elif [[ $1 == 'cp' || $1 == 'mv' || $1 == 'rm' ]]; then
         curl "ftp://$serverdefault/$remote" -o "$local" 2> /dev/null
         result=$?
       elif [[ $curroperation == "mv" ]]; then
-        if [[ $1 == 'rm' ]]; then
+        if [[ $primarycmd == 'rm' ]]; then
           msg="\033[1;92mdeleting:\033[0m http://$cdnurl/$remote"
         else
           msg="\033[1;92mmoving:\033[0m http://$cdnurl/$remote -> $local"
@@ -892,53 +913,74 @@ elif [[ $1 == 'cp' || $1 == 'mv' || $1 == 'rm' ]]; then
     fi
   fi
 
-  display_message "$msg"
-  display_message $(validate_curl_result $result)
+  display_message "$msg" >&2
+
+  validationresult=$(validate_curl_result $result)
   result=$?
 
+  display_message "$validationresult" >&2
+
   if [[ $result -eq 0 ]]; then
-    if [[ ( $mode == "up" || $1 == "rm" ) && $invalidate -eq 1 ]]; then
+    if [[ ( $mode == "up" || $primarycmd == "rm" ) && $inputflags =~ 'i' ]]; then
       invalidate $remote
       result=$?
     fi
   fi
   exit $result
-elif [[ $1 == 'iv' ]]; then
-  if [[  -z $2 || $2 == 'help' || ${2:0:6} != 'cdn://' || ${#@} -gt 2 ]]; then
-    word_wrap $(expr $(tput cols) - 1) 1 "usage: beluga-cli $1 <cdn://uri>"
-    if [[ $2 == 'help' ]]; then
-      word_wrap $(expr $(tput cols) - 1) 1 "invalidates a file so it must be retrieved again from the origin server."
-      word_wrap $(expr $(tput cols) - 1) 1 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m."
-    elif [[ -z $2 ]]; then
-      word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too few args"
-    elif [[ ${#@} -gt 2 ]]; then
-      word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too many args"
-    elif [[ ${2:0:6} != 'cdn://' ]]; then
-      word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes no cdn:// uri"
+elif [[ $primarycmd == 'iv' ]]; then
+  if [[ ${args[0]} == 'help' || ${#args[@]} -gt 1 || ${#args[@]} -lt 1 || ${args[0]:0:6} != 'cdn://' ]]; then
+    word_wrap $(expr $(tput cols) - 1) 1 "usage: beluga-cli $1 [-s] <cdn://uri>" >&2
+    if [[ ${args[0]} == 'help' ]]; then
+      word_wrap $(expr $(tput cols) - 1) 1 "invalidates a file so it must be retrieved again from the origin server." >&2
+      word_wrap $(expr $(tput cols) - 1) 1 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
+    elif [[ ${#args[@]} -lt 1 ]]; then
+      word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too few args" >&2
+    elif [[ ${#args[@]} -gt 1 ]]; then
+      word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too many args" >&2
+    elif [[ ${args[0]:0:6} != 'cdn://' ]]; then
+      word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes no cdn:// uri" >&2
     fi
     exit 3
   else
-    destinationpath=${2/cdn:\/\//}
+    if [[ $inputflags =~ 'i' ]]; then
+      word_wrap $(tput cols) 1 "unexpected flag: -i" >&2
+    fi
+
+    destinationpath=${args[0]/cdn:\/\//}
 
     invalidate $destinationpath
   fi
-elif [[ $1 == 'ls' || $1 == 'll' ]]; then
-  if [[  -z $2 || $2 == 'help' || ${2:0:6} != 'cdn://' || ${#@} -gt 2 ]]; then
-    word_wrap $(expr $(tput cols) - 1) 1  "usage: beluga-cli $1 <cdn://uri>"
-    if [[ $2 == 'help' ]]; then
-      word_wrap $(expr $(tput cols) - 1) 1 "retrieves and lists the contents of a specified directory on the origin."
-      word_wrap $(expr $(tput cols) - 1) 1 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m."
-    elif [[ -z $2 ]]; then
-      word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too few args"
-    elif [[ ${#@} -gt 2 ]]; then
-      word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too many args"
-    elif [[ ${2:0:6} != 'cdn://' ]]; then
-      word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes no cdn:// uri"
+elif [[ $primarycmd == 'ls' || $primarycmd == 'll' ]]; then
+  if [[ ${#inputflags} -gt 0 ]]; then
+    msg="unexpected flag: -$inputflags"
+    if [[ ${#inputflags} -gt 1 ]]; then
+      msg="unexpected flags: -$inputflags"
+    fi
+
+    if [[ $inputflags =~ 's' ]]; then
+      inputflags=${inputflags//s/}
+    fi
+
+    word_wrap $(tput cols) 1 "$msg" >&2
+  fi
+
+
+  if [[ ${args[0]} == 'help' || ${#args[@]} -gt 1 || ${#args[@]} -lt 1 || ${args[0]:0:6} != 'cdn://' ]]; then
+    word_wrap $(expr $(tput cols) - 1) 1  "usage: beluga-cli $1 <cdn://uri>" >&2
+    if [[ ${args[0]} == 'help' ]]; then
+      word_wrap $(expr $(tput cols) - 1) 1 "retrieves and lists the contents of a specified directory on the origin." >&2
+      word_wrap $(expr $(tput cols) - 1) 1 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
+    elif [[ ${#args[@]} -lt 1 ]]; then
+      word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too few args" >&2
+    elif [[ ${#args[@]} -gt 1 ]]; then
+      word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too many args" >&2
+    elif [[ ${args[0]:0:6} != 'cdn://' ]]; then
+      word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes no cdn:// uri" >&2
     fi
     exit 3
   fi
 
-  remote=${2/cdn:\/\//}
+  remote=${args[0]/cdn:\/\//}
 
   endchar=${remote:$(expr ${#remote} - 1):1}
 
@@ -949,7 +991,8 @@ elif [[ $1 == 'ls' || $1 == 'll' ]]; then
   myurl=http://$cdnurl/$remote
 
   msg="\033[1;92mlisting contents of\033[0m $myurl"
-  display_message "$msg"
+
+  display_message "$msg" >&2
 
   if [[ $1 == 'ls' ]]; then
     listing=$(curl -l "ftp://$serverdefault/$remote" 2> /dev/null)
@@ -963,9 +1006,9 @@ elif [[ $1 == 'ls' || $1 == 'll' ]]; then
   exitstatus=$?
 
   if [[ $exitstatus -eq 0 ]]; then
-    echo -e "\033[1;92msuccess:\033[0m"
+    echo -e "\033[1;92msuccess\033[0m" >&2
     echo -e "$listing"
   else
-    word_wrap $(tput cols) 0  "$validationresult"
+    word_wrap $(tput cols) 0  "$validationresult" >&2
   fi
 fi
