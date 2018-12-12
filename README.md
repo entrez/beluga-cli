@@ -3,7 +3,7 @@
 ## overview:
 
 ### usage:
-`beluga-cli <command> [arguments]`
+`beluga-cli <command> [-is] [arguments]`
 
 ### description:
 beluga-cli is a bash utility which uses [curl](https://curl.haxx.se/) - with the exception of the `ftp` command, which uses [ftp](https://www.gnu.org/software/inetutils/)\* - to efficiently manipulate files on an ftp origin server (like the one provided by beluga) and interact with the belugacdn api. it can be used to quickly accomplish, and/or as a step in the automation of, many tasks involving the manipulation of files stored on an ftp origin and accessible to the public via [belugacdn](http://www.belugacdn.com/).
@@ -17,20 +17,26 @@ in order to get everything working correctly before you start using beluga-cli, 
 
 if you would like to be able to run the utility by typing `beluga-cli` no matter your current location, you can add the directory which contains the file to your `$PATH` variable.
 
+## possible flags:
+
+**-i** : beluga-cli will invalidate the uri of any file modified by the requested operation. see [here](#origin-vs-cdn).
+
+**-s** : the program will run silently.
+
+each flag can only be used on certain commands. if a flag is used on a command where it is not standard, beluga-cli will generally print an error message but then ignore the flag and continue.
+
 ## possible commands:
 
 ### file manipulation:
 
-if `+iv` is included when running one of these commands, after completing the operation beluga-cli will invalidate any cdn uris that were modified. for more information about when this may be useful, see [origin vs cdn](#origin-vs-cdn).
-
 **cp** : upload or download a file, resulting in duplicate copies at the origin and destination.  
-usage: `beluga-cli cp [+iv] <localpath> <cdn://uri> or <cdn://uri> <localpath> or <cdn://uri> <cdn://uri>`
+usage: `beluga-cli cp [-is] <localpath> <cdn://uri> or <cdn://uri> <localpath> or <cdn://uri> <cdn://uri>`
 
 **mv** : move a file to, from, or within the server, deleting the original and keeping the new copy.  
-usage: `beluga-cli mv [+iv] <localpath> <cdn://uri> or <cdn://uri> <localpath> or <cdn://uri> <cdn://uri>`
+usage: `beluga-cli mv [-is] <localpath> <cdn://uri> or <cdn://uri> <localpath> or <cdn://uri> <cdn://uri>`
 
 **rm** : delete a remote file.  
-usage: `beluga-cli rm [+iv] <cdn://uri>`
+usage: `beluga-cli rm [-is] <cdn://uri>`
 
 ### navigation & file discovery:
 
@@ -46,7 +52,7 @@ usage: `beluga-cli ll <cdn://uri>`
 ### cdn utilities:
 
 **iv** : invalidate a file in the cdn's cache, so that another copy must be retrieved from the origin server.  
-usage: `beluga-cli iv <cdn://uri>`
+usage: `beluga-cli iv [-s] <cdn://uri>`
 
 ## brief examples:
 
@@ -59,17 +65,17 @@ the following examples should help to demonstrate what normal input and output l
    invalidating: http://cdn.example.com/public/main.html
    request pending
    ```
-   
+
 2. replace an online file with an updated local copy and request invalidation so the update becomes visible on the cdn:
 
    ```
-   $ beluga-cli cp +iv work/progressreport.pdf cdn://reports/2018.pdf
+   $ beluga-cli cp -i work/progressreport.pdf cdn://reports/2018.pdf
    uploading: work/progressreport.pdf -> cdn://reports/2018.pdf
    done
    invalidating: http://cdn.example.com/reports/2018.pdf
    request pending
    ```
-   
+
 3. look through the contents of a directory and download a particular file:
 
    ```
@@ -85,11 +91,11 @@ the following examples should help to demonstrate what normal input and output l
    downloading: cdn://images/logo.png -> ~/Downloads/logo.png
    done
    ```
-   
+
 4. use grep and xargs to download every image file (.png or .jp[e]g) in the dir from the previous example to a local directory named 'cdnimg', with 'cp_' prepended to each local filename:
- 
+
    ```
-   $ beluga-cli ls cdn://images | grep -E "\.(jpe?g|png)" | xargs -I % beluga-cli cp cdn://images/% ~/cdnimg/cp_%
+   $ beluga-cli ls cdn://images 2> /dev/null | grep -E "\.(jpe?g|png)" | xargs -I % beluga-cli cp cdn://images/% ~/cdnimg/cp_%
    downloading: cdn://images/babypic.jpg -> ~/cdnimg/cp_babypic.jpg
    done
    downloading: cdn://images/logo.png -> ~/cdnimg/cp_logo.png
