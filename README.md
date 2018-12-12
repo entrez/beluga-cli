@@ -19,7 +19,7 @@ if you would like to be able to run the utility by typing `beluga-cli` no matter
 
 ## possible flags:
 
-**-i** : beluga-cli will invalidate the uri of any file modified by the requested operation. see [here](#origin-vs-cdn).
+**-i** : beluga-cli will invalidate the uri of any file modified by the requested operation. see [here](#origin-vs-cdn) for why/when this may be useful.
 
 **-s** : the program will run silently.
 
