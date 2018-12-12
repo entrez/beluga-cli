@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 
-# exit codes:
+# beluga-cli exit codes:
 # 0 success
 # 1 failure: operation aborted
 # 2 invalidation request already pending
 # 3 illegal input
 # 4 missing config
 
+# usage: display_message <message>
+# attempts to constrain status messages to fit the current terminal size, by
+# replacing certain substrings with shorter aliases, etc
 display_message ( ) {
   IFS=$'\n'
   for line in $1; do
@@ -75,6 +78,12 @@ display_message ( ) {
   done
 }
 
+# usage: validate_curl_result <result>
+# interprets certain relevant curl exit codes
+#
+# exit codes:
+#  0 success
+#  1 failure
 validate_curl_result ( ) {
   local res=$1
 
@@ -105,6 +114,8 @@ validate_curl_result ( ) {
   fi
 }
 
+# usage: center_text <text>
+# centers text in terminal window
 center_text ( ) {
   IFS=$'\n'
   left_pad=$(expr $(expr $(tput cols) - $(echo -e $1 | tr -d '\n' | sed "s,$(printf '\033')\\[[0-9;]*[a-zA-Z],,g" | awk '{print length}')) / 2)
@@ -118,12 +129,31 @@ center_text ( ) {
   echo -e "$tab$1"
 }
 
-# word_wrap <maxlinelength> <[numuntabbedlines- or numlines:startingtab-]lefttab> text
-# maxlinelength refers to the length of the text including spaces, plus the number
-# of spaces specified by lefttab.
-# numuntabbedlines can be replaced with "a" for append mode (used for adding to
-# an existing line).
-# should work fine with ANSI color codes.
+# usage: word_wrap <maxlinelength> [a- or <numuntabbedlines>- or
+# <numinitiallines>:<initiallefttab>-]<lefttab> <text>
+#
+# arguments:
+#  maxlinelength: max length of each line, including initial tab
+#  numuntabbedlines: number of initial lines with no tab. can also be set to
+#                    the letter 'a' for 'append mode' (to add to an existing
+#                    line)
+#  numinitiallines: num. of initial lines w/ tab of length 'initiallefttab'
+#  initiallefttab: length of tab for 'numinitiallines' initial lines
+#  lefttab: length of tab after 'numinitiallines' or 'numuntabbedlins', or,
+#           if used alone, tab length for entire paragraph.
+#  text: text to be displayed with word wrap
+#
+# for example, `word_wrap 30 1:4-8 $msg` would print $msg in the following
+# format, where no line is longer than 30 characters total, the first line
+# has a 4 space left tab, the following lines have an 8 space tab, and "word
+# wrap" is enabled (initial 'tab' spaces represented by periods for clarity):
+#  ....Lorem ipsum dolor sit amet
+#  ........consectetur adipiscing
+#  ........elit. Maecenas
+#  ........convallis, leo non
+#  ........sollicitudin molestie.
+#
+# it should work fine with all ANSI color codes.
 word_wrap ( ) {
   IFS=' '
   maxlength=$1
@@ -185,6 +215,9 @@ word_wrap ( ) {
   echo $currline
 }
 
+# usage: display_help_page (or can be piped through less for manpage-like
+# behavior)
+# displays extended help page for beluga-cli
 display_help_page ( ) {
   echo
   echo
@@ -300,6 +333,16 @@ display_help_page ( ) {
   echo
 }
 
+# usage: invalidate <path>
+# sends an invalidation request to beluga via their api and displays the result
+#
+# exit codes:
+#  0  success
+#  1  failure
+#  2  uri invalidation already pending
+#
+# currently uses basic authentication because I can't get token authentication
+# working... still working on it.
 invalidate ( ) {
   myurl=http://$cdnurl/$1
 
