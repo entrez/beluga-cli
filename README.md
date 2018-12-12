@@ -6,16 +6,16 @@
 `beluga-cli <command> [arguments]`
 
 #### description:
-beluga-cli is a bash utility which uses [curl](https://curl.haxx.se/) - with the exception of the `beluga ftp` command, which uses [ftp](https://www.gnu.org/software/inetutils/)\* - to efficiently manipulate files on an ftp origin server (like the one provided by beluga) and interact with the belugacdn api. it can be used to quickly accomplish, and/or as a step in the automation of, many tasks involving the manipulation of files stored on an ftp origin and accessible to the public via [belugacdn](http://www.belugacdn.com/).
+beluga-cli is a bash utility which uses [curl](https://curl.haxx.se/) - with the exception of the `ftp` command, which uses [ftp](https://www.gnu.org/software/inetutils/)\* - to efficiently manipulate files on an ftp origin server (like the one provided by beluga) and interact with the belugacdn api. it can be used to quickly accomplish, and/or as a step in the automation of, many tasks involving the manipulation of files stored on an ftp origin and accessible to the public via [belugacdn](http://www.belugacdn.com/).
 
-\* if you are running mac os 10.13 or newer and do not have a command line ftp client installed but wish to use this command, you can install ftp by running the following [homebrew](https://brew.sh/) command: `brew install tnftp`
+\*if you are running mac os 10.13 or newer and do not have a command line ftp client installed but wish to use this command, you can install ftp by running the following [homebrew](https://brew.sh/) command: `brew install tnftp`.
 
 #### setup:
 in order to get everything working correctly before you start using beluga-cli, run the command `beluga-cli setup` to define the location and credentials used for your origin, the credentials used for belugacdn, and so on.  
 
 **caution:** your origin server username and password will be stored & transmitted as plain text, so ensure they are not used elsewhere.
 
-if you would like to be able to run the utility with `beluga-cli` no matter your current location, you can add the directory which contains the file to your `$PATH` variable.
+if you would like to be able to run the utility by typing `beluga-cli` no matter your current location, you can add the directory which contains the file to your `$PATH` variable.
 
 ## possible commands:
 
@@ -59,6 +59,7 @@ the following examples should help to demonstrate what normal input and output l
    invalidating: http://cdn.example.com/public/main.html
    request pending
    ```
+   
 2. replace an online file with an updated local copy and request invalidation so the update becomes visible on the cdn:
 
    ```
@@ -85,7 +86,7 @@ the following examples should help to demonstrate what normal input and output l
    done
    ```
    
-4. use grep and xargs to download every image file (.png or .jpg) in the dir from the previous example to a local directory named 'cdnimg', with 'cp_' prepended to each local filename:
+4. use grep and xargs to download every image file (.png or .jp[e]g) in the dir from the previous example to a local directory named 'cdnimg', with 'cp_' prepended to each local filename:
  
    ```
    $ beluga-cli ls cdn://images | grep -E "\.(jpe?g|png)" | xargs -I % beluga-cli cp cdn://images/% ~/cdnimg/cp_%
