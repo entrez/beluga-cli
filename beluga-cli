@@ -737,19 +737,23 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
 
       display_message "$msg" >&2
 
-      if [[ $curlstatus -eq 0 ]]; then
-        invalidate $source
-        result1=$?
+      if [[ $curlstatus -eq 0 && $inputflags =~ 'i' ]]; then
+        if [[ $curroperation == 'mv' ]]; then
+          invalidate $source
+          result1=$?
 
-        invalidate $destination
-        result2=$?
+          invalidate $destination
+          result2=$?
 
-        if [[ $result1 -ne 0 ]]; then
-          exit $result1
-        elif [[ $result2 -ne 0 ]]; then
-          exit $result2
+          if [[ $result1 -eq $result2 && $result1 -eq 0 ]]; then
+            exit 0
+          else
+            exit 5
+          fi
         else
-          exit 0
+          invalidate $destination
+          result=$?
+          (( result == 0 )) && exit 0 || exit 5
         fi
       else
         exit $curlstatus
