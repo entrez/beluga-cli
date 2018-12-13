@@ -530,13 +530,15 @@ else
     fi
   done
 
-  if [[ $inputflags != $(echo $inputflags | tr -dc 'isr' ) ]]; then
+  legalflags="isr"
+
+  if [[ $inputflags != $(echo $inputflags | tr -dc $legalflags ) ]]; then
     word_wrap $(expr $(tput cols) - 1) 1 "usage: beluga-cli <command> [flags] [arguments]" >&2
     word_wrap $(expr $(tput cols) - 1) 1 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
-    if [[ $(echo $inputflags | tr -d 'is' | awk '{print length}') -gt 1 ]]; then
-      word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m unexpected flags -$(echo $inputflags | tr -d 'is')"
+    if [[ $(echo $inputflags | tr -d $legalflags | awk '{print length}') -gt 1 ]]; then
+      word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m unexpected flags -$(echo $inputflags | tr -d $legalflags)"
     else
-      word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m unexpected flag -$(echo $inputflags | tr -d 'is')"
+      word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m unexpected flag -$(echo $inputflags | tr -d $legalflags)"
     fi
     exit 3
   elif [[ $1 == 'help' && $count -gt 0 ]]; then
@@ -613,6 +615,10 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
     local='/dev/null'
     mode="down"
   else
+    if [[ $inputflags =~ 'r' ]]; then
+      word_wrap $(tput cols) 1 "unexpected flag: -r" >&2
+    fi
+
     curroperation=$primarycmd
     if [[ ${args[0]} == 'help' || ${#args[@]} -gt 2 || ${#args[@]} -lt 2 || ( ${args[0]:0:6} != 'cdn://' && ${args[1]:0:6} != 'cdn://' ) ]]; then
       word_wrap $(expr $(tput cols) - 1) 1:1-8 "usage: beluga-cli $primarycmd [-is] <localpath> <cdn://uri> or <cdn://uri> <localpath> or <cdn://uri> <cdn://uri>" >&2
@@ -807,9 +813,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
               result=$?
 
               if [[ $result -eq 0 ]]; then
-                if [[ ! $inputflags =~ 's' ]]; then
-                  msg="\033[1;92mdone\033[0m"
-                fi
+                msg="\033[1;92mdone\033[0m"
               elif [[ $result -eq 5 ]]; then
                 msg="partly \033[31;1mfailed:\033[0m deleting http://$cdnurl/$remote/"
               else
@@ -1021,8 +1025,12 @@ elif [[ $primarycmd == 'iv' ]]; then
     fi
     exit 3
   else
-    if [[ $inputflags =~ 'i' ]]; then
-      word_wrap $(tput cols) 1 "unexpected flag: -i" >&2
+    if [[ $inputflags =~ 'i' || $inputflags =~ 'r' ]]; then
+      if [[ $(echo $inputflags | tr -dc 'ir' | awk '{print length}') -gt 1 ]]; then
+        word_wrap $(tput cols) 1 "unexpected flags: -$(echo $inputflags | tr -dc 'ir')" >&2
+      else
+        word_wrap $(tput cols) 1 "unexpected flag: -$(echo $inputflags | tr -dc 'ir')" >&2
+      fi
     fi
 
     destinationpath=${args[0]/cdn:\/\//}
