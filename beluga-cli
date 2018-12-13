@@ -801,7 +801,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
         remote=${remote:0:$(expr ${#remote} - 1)}
       fi
 
-      dircontents=$(curl -l "ftp://$serverdefault/$remote/" > /dev/null 2> /dev/null)
+      dircontents=$(curl -l "ftp://$serverdefault/$remote/" 2> /dev/null)
       result=$?
 
       if [[ $result -eq 0 ]]; then
@@ -817,11 +817,11 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
               if [[ $result -eq 0 ]]; then
                 msg="\033[1;92mdone\033[0m"
               elif [[ $result -eq 5 ]]; then
-                msg="partly \033[31;1mfailed:\033[0m deleting http://$cdnurl/$remote/"
+                msg="\033[1;33mpartly \033[1;33mfailed:\033[0m some files not deleted"
               else
-                msg="\033[31;1mfailed:\033[0m deleting http://$cdnurl/$remote/"
+                msg="\033[31;1mfailed:\033[0m http://$cdnurl/$remote/ not deleted"
               fi
-            elif [[ -z $dircontents ]]; then
+            elif [[ -z "$dircontents" ]]; then
               msg="\033[1;92mdeleting:\033[0m http://$cdnurl/$remote/"
               display_message "$msg"
               curl -l "ftp://$serverdefault/" -Q "-RMD $remote" > /dev/null 2> /dev/null
@@ -831,15 +831,19 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
               word_wrap $(tput cols) 0  "$validationresult" >&2
               exit $result
             else
-              msg="\033[31;1mfailed:\033[0m http://$cdnurl/$remote/ -> $local"$'\n'"directory not empty: http://$cdnurl/$remote/"
+              msg="\033[1;92mdeleting:\033[0m http://$cdnurl/$remote/"
+              display_message "$msg" >&2
+              msg="\033[31;1mfailed:\033[0m operation not completed [directory not empty]"
+              result=1
             fi
           else
             msg="\033[31;1mfailed:\033[0m http://$cdnurl/$remote/ -> $local"$'\n'"is a directory: http://$cdnurl/$remote/"
+            result=1
           fi
 
           display_message "$msg" >&2
 
-          exit 1
+          exit $result
         elif [[ $mode == "up" ]]; then
           if [[ ! -z $(echo $local | tr -dc '/' | awk '{print length}') ]]; then
             remote+="/$(echo $local | cut -d'/' -f $(expr $(echo $local | tr -dc '/' | awk '{print length}') + 1))"
