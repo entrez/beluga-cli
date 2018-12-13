@@ -28,7 +28,7 @@ usage: `beluga-cli cp [-is] <localpath> <cdn://uri> or <cdn://uri> <localpath> o
 usage: `beluga-cli mv [-is] <localpath> <cdn://uri> or <cdn://uri> <localpath> or <cdn://uri> <cdn://uri>`
 
 **rm** : delete a remote file.  
-usage: `beluga-cli rm [-is] <cdn://uri>`
+usage: `beluga-cli rm [-isr] <cdn://uri>`
 
 ### navigation & file discovery:
 
@@ -51,6 +51,8 @@ usage: `beluga-cli iv [-s] <cdn://uri>`
 **-i** : will invalidate the uri of any file modified by the requested operation. see [origin vs cdn](#origin-vs-cdn) for why this may be useful.
 
 **-s** : the program will run silently.
+
+**-r** : delete all contents of the specified directory recursively.
 
 each flag can only be used on certain commands (see [above](#possible-commands)). if a flag is used on a command where it is not standard, beluga-cli will generally print an error message but then ignore the flag and continue.
 

@@ -244,7 +244,7 @@ display_help_page ( ) {
   word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mmv \033[0m[\033[37m-is\033[0m] <\033[37mlocalpath\033[0m> <\033[37mcdn://uri\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mlocalpath\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mcdn://uri\033[0m>"
   echo
   echo -e "     \033[1mrm\033[0m     delete a remote file."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mrm \033[0m[\033[37m-is\033[0m] <\033[37mcdn://uri\033[0m>"
+  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mrm \033[0m[\033[37m-isr\033[0m] <\033[37mcdn://uri\033[0m>"
   echo
   echo
   center_text "\033[1mnavigation/file discovery\033[0m"
@@ -273,6 +273,9 @@ display_help_page ( ) {
   echo
   echo -en "     \033[1m-s\033[0m     "
   word_wrap $(expr $(tput cols) - 5) a-12 "the program will run silently."
+  echo
+  echo -en "     \033[1m-r\033[0m     "
+  word_wrap $(expr $(tput cols) - 5) a-12 "delete all contents of the specified directory recursively."
   echo
   word_wrap $(expr $(tput cols) - 5) 5 "each flag can only be used on certain commands. if a flag is used on a command where it is not standard, beluga-cli will generally print an error message but then ignore the flag and continue."
   echo
@@ -590,7 +593,7 @@ elif [[ $primarycmd == 'ftp' ]]; then
 elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; then
   if [[ $primarycmd == 'rm' ]]; then
     if [[ ${args[0]} == 'help' || ${#args[@]} -gt 1 || ${#args[@]} -lt 1 || ${args[0]:0:6} != 'cdn://' ]]; then
-      word_wrap $(expr $(tput cols) - 1) 1 "usage: beluga-cli rm [-is] <cdn://uri>" >&2
+      word_wrap $(expr $(tput cols) - 1) 1 "usage: beluga-cli rm [-isr] <cdn://uri>" >&2
       if [[ ${args[0]} == 'help' ]]; then
         word_wrap $(expr $(tput cols) - 1) 1 "deletes a file from the origin server." >&2
         word_wrap $(expr $(tput cols) - 1) 1 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
@@ -799,7 +802,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
             if [[ $inputflags =~ 'r' ]]; then
               msg="\033[1;92mdeleting:\033[0m http://$cdnurl/$remote/"
               display_message "$msg"
-              
+
               recursive_delete $remote
               result=$?
 
