@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 
-# beluga-cli exit codes:
-# 0 success
-# 1 failure: operation aborted
-# 2 invalidation request already pending
-# 3 illegal input
-# 4 missing config
-# 5 partial failure
+# beluga-cli
+versionnumber="v0.2.0"
+# exit codes:
+#  0 success
+#  1 failure: operation aborted
+#  2 invalidation request already pending
+#  3 illegal input
+#  4 missing config
+#  5 partial failure
 
 # usage: display_message <message>
 # attempts to constrain status messages to fit the current terminal size, by
@@ -226,7 +228,7 @@ word_wrap ( ) {
 display_help_page ( ) {
   echo
   echo
-  center_text "\033[1mextended help for beluga-cli\033[0m"
+  center_text "\033[1mextended help for beluga-cli $versionnumber\033[0m"
   echo
   echo -e "\n \033[1;4musage\033[0;1m:\033[0m \033[37mbeluga-cli\033[0m <\033[37mcommand\033[0m> [\033[37mflags\033[0m] [\033[37marguments\033[0m]\n"
   echo -e " \033[1;4mdescription\033[0;1m:\033[0m"
