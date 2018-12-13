@@ -27,7 +27,7 @@ usage: `beluga-cli cp [-is] <localpath> <cdn://uri> or <cdn://uri> <localpath> o
 **mv** : move a file to, from, or within the server, deleting the original and keeping the new copy.  
 usage: `beluga-cli mv [-is] <localpath> <cdn://uri> or <cdn://uri> <localpath> or <cdn://uri> <cdn://uri>`
 
-**rm** : delete a remote file.  
+**rm** : delete a remote file or directory.  
 usage: `beluga-cli rm [-irs] <cdn://uri>`
 
 ### navigation & file discovery:

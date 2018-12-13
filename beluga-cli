@@ -245,7 +245,7 @@ display_help_page ( ) {
   word_wrap $(expr $(tput cols) - 5) a-12 "move a file to, from, or within the server, so that the original copy is deleted and only the new one at the destination is kept."
   word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mmv \033[0m[\033[37m-is\033[0m] <\033[37mlocalpath\033[0m> <\033[37mcdn://uri\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mlocalpath\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mcdn://uri\033[0m>"
   echo
-  echo -e "     \033[1mrm\033[0m     delete a remote file."
+  echo -e "     \033[1mrm\033[0m     delete a remote file or directory."
   word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mrm \033[0m[\033[37m-irs\033[0m] <\033[37mcdn://uri\033[0m>"
   echo
   echo
