@@ -587,7 +587,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
       exit 3
     fi
 
-    remote=${args[0]/cdn:\/\//}
+    remote=${args[0]#cdn:\/\/}
     curroperation='mv'
     local='/dev/null'
     mode="down"
@@ -619,17 +619,17 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
 
 
     if [[ ${args[0]:0:6} == 'cdn://' && ${args[1]:0:6} == 'cdn://' ]]; then
-      source=${args[0]/cdn:\/\//}
-      destination=${args[1]/cdn:\/\//}
+      source=${args[0]#cdn:\/\/}
+      destination=${args[1]#cdn:\/\/}
       mode="rename"
     else
       if [[ ${args[1]:0:6} == 'cdn://' ]]; then
         local=${args[0]}
-        remote=${args[1]/cdn:\/\//}
+        remote=${args[1]#cdn:\/\/}
         mode="up"
       elif [[ ${args[0]:0:6} == 'cdn://' ]]; then
         local=${args[1]}
-        remote=${args[0]/cdn:\/\//}
+        remote=${args[0]#cdn:\/\/}
         mode="down"
       fi
     fi
@@ -638,6 +638,8 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
       local=$PWD
     elif [[ ${local:0:2} == './' ]]; then
       local="$PWD/${local:2}"
+    elif [[ ${local:0:1} == '~' ]]; then
+      local=${local/\~/$HOME}
     fi
   fi
 
@@ -658,35 +660,19 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
       display_message "$msg" >&2
       exit 1
     else
-      if [[ ! -z $(echo $source | tr -dc '/') ]]; then
-        sourcefile="$(echo $source | cut -d'/' -f$(expr $(echo $source | tr -dc '/' | awk '{print length}') + 1))"
-      else
-        sourcefile=$source
-      fi
+      sourcefile=$(expr "//$source" : '.*/\(.*\)')
 
       if [[ ${destination:$(expr ${#destination} - 1)} == '/' ]]; then
-        if [[ ! -z $(echo $source | tr -dc '/' | awk '{print length}') ]]; then
-          remote+="$(echo $source | cut -d'/' -f $(expr $(echo $source | tr -dc '/' | awk '{print length}') + 1))"
-        else
-          remote+="$source"
-        fi
+        destination+=$sourcefile
       else
         if [[ ! -z $destination ]]; then
           curl -l "ftp://$serverdefault/$destination/" > /dev/null 2> /dev/null
           result=$?
           if [[ $result -eq 0 ]]; then
-            if [[ ! -z $(echo $source | tr -dc '/' | awk '{print length}') ]]; then
-              destination+="/$(echo $source | cut -d'/' -f $(expr $(echo $source | tr -dc '/' | awk '{print length}') + 1))"
-            else
-              destination+="/$source"
-            fi
+            destination+="/$sourcefile"
           fi
         else
-          if [[ ! -z $(echo $source | tr -dc '/' | awk '{print length}') ]]; then
-            destination="$(echo $source | cut -d'/' -f $(expr $(echo $source | tr -dc '/' | awk '{print length}') + 1))"
-          else
-            destination="$source"
-          fi
+          destination+="/$sourcefile"
         fi
       fi
 
@@ -736,45 +722,33 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
     fi
   else
     if [[ ! -e $local && $mode == "up" ]]; then
-      if [[ $local =~ '.' ]] || [[ ${local:$(expr ${#local} - 1):1} == '/' ]]; then
-        if [[ -z $remote || $remote =~ '.' || ${remote:$(expr ${#remote} - 1):1} == '/' ]]; then
-          msg="\033[31;1mfailed:\033[0m $local -> http://$cdnurl/$remote"$'\n'"does not exist: $local"
-        else
-          msg="\033[31;1mfailed:\033[0m $local -> http://$cdnurl/$remote/"$'\n'"does not exist: $local"
-        fi
-      else
-        if [[ -z $remote || $remote =~ '.' || ${remote:$(expr ${#remote} - 1):1} == '/' ]]; then
-          msg="\033[31;1mfailed:\033[0m $local/ -> http://$cdnurl/$remote"$'\n'"does not exist: $local/"
-        else
-          msg="\033[31;1mfailed:\033[0m $local/ -> http://$cdnurl/$remote/"$'\n'"does not exist: $local/"
-        fi
+      remotefile=$(expr "//$remote" : '.*/\(.*\)')
+      if [[ ! ( $remotefile =~ '.' || -z $remotefile ) ]]; then
+        remote+='/'
       fi
 
+      msg="\033[31;1mfailed:\033[0m $local -> http://$cdnurl/$remote"$'\n'"does not exist: $local"
       display_message "$msg" >&2
 
       exit 1
     elif [[ -d $local && $mode == "up" ]]; then
       if [[ ${local:$(expr ${#local} - 1):1} == '/' ]]; then
-        if [[ -z $remote || $remote =~ '.' || ${remote:$(expr ${#remote} - 1):1} == '/' ]]; then
-          msg="\033[31;1mfailed:\033[0m $local -> http://$cdnurl/$remote"$'\n'"is a directory: $local"
-        else
-          msg="\033[31;1mfailed:\033[0m $local -> http://$cdnurl/$remote/"$'\n'"is a directory: $local"
-        fi
-      else
-        if [[ -z $remote || $remote =~ '.' || ${remote:$(expr ${#remote} - 1):1} == '/' ]]; then
-          msg="\033[31;1mfailed:\033[0m $local/ -> http://$cdnurl/$remote"$'\n'"is a directory: $local/"
-        else
-          msg="\033[31;1mfailed:\033[0m $local/ -> http://$cdnurl/$remote/"$'\n'"is a directory: $local/"
-        fi
+        local=${local:0:$(expr ${#local} - 1)}
       fi
 
-      display_message "$msg" >&2
+      remotefile=$(expr "//$remote" : '.*/\(.*\)')
+      if [[ ! ( $remotefile =~ '.' || -z $remotefile ) ]]; then
+        remote="$remote/"
+      fi
 
+      msg="\033[31;1mfailed:\033[0m $local/ -> http://$cdnurl/$remote"$'\n'"is a directory: $local/"
+
+      display_message "$msg" >&2
       exit 1
     fi
 
     if [[ ! -z $remote ]]; then
-      remoteendchar=${remote:$(expr ${#remote} - 1):1}
+      remoteendchar=${remote:$(expr ${#remote} - 1)}
 
       if [[ $remoteendchar == '/' ]]; then
         remote=${remote:0:$(expr ${#remote} - 1)}
@@ -783,7 +757,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
       dircontents=$(curl -l "ftp://$serverdefault/$remote/" 2> /dev/null)
       result=$?
 
-      if [[ $result -eq 0 ]]; then
+      if [[ $result -eq 0 ]]; then # if $remote is a directory...
         if [[ $mode == "down" ]]; then
           if [[ $primarycmd == 'rm' ]]; then
             if [[ $inputflags =~ 'r' ]]; then
@@ -822,75 +796,35 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
 
           display_message "$msg" >&2
 
-          exit $result
+          exit $result # and we are downloading (or deleting)
         elif [[ $mode == "up" ]]; then
-          if [[ ! -z $(echo $local | tr -dc '/' | awk '{print length}') ]]; then
-            remote+="/$(echo $local | cut -d'/' -f $(expr $(echo $local | tr -dc '/' | awk '{print length}') + 1))"
-          else
-            remote+="/$local"
-          fi
+          remote+="/$(expr "//$local" : '.*/\(.*\)')"
         fi
-      else
-        if [[ $mode == "up" ]]; then
-          if [[ $remoteendchar == '/' ]]; then
-            if [[ ! -z $(echo $local | tr -dc '/' | awk '{print length}') ]]; then
-              remote+="/$(echo $local | cut -d'/' -f $(expr $(echo $local | tr -dc '/' | awk '{print length}') + 1))"
-            else
-              remote+="/$local"
-            fi
-          else
-            if [[ ! -z $(echo $remote | tr -dc '/' | awk '{print length}') ]]; then
-              if [[ ! $(echo $remote | cut -d'/' -f $(expr $(echo $remote | tr -dc '/' | awk '{print length}') + 1)) =~ '.' ]]; then
-                if [[ ! -z $(echo $local | tr -dc '/' | awk '{print length}') ]]; then
-                  if [[ ${local:$(expr ${#local} - 1):1} == '/' && $(echo $local | cut -d'/' -f $(echo $local | tr -dc '/' | awk '{print length}')) =~ '.' ]]; then
-                    remote+="/$(echo $local | cut -d'/' -f $(echo $local | tr -dc '/' | awk '{print length}'))"
-                  elif [[ ${local:$(expr ${#local} - 1):1} != '/' && $(echo $local | cut -d'/' -f $(expr $(echo $local | tr -dc '/' | awk '{print length}') + 1)) =~ '.' ]]; then
-                    remote+=$(echo $local | cut -d'/' -f $(expr $(echo $local | tr -dc '/' | awk '{print length}') + 1))
-                  fi
-                else
-                  if [[ ${local:$(expr ${#local} - 1):1} == '/' && $local =~ '.' ]]; then
-                    remote+="/$local"
-                  elif [[ ${local:$(expr ${#local} - 1):1} != '/' && $local =~ '.' ]]; then
-                    remote+=$local
-                  fi
-                fi
-              fi
-            else
-              if [[ ! $remote =~ '.' ]]; then
-                if [[ ! -z $(echo $local | tr -dc '/' | awk '{print length}') ]]; then
-                  if [[ ${local:$(expr ${#local} - 1):1} == '/' && $(echo $local | cut -d'/' -f $(echo $local | tr -dc '/' | awk '{print length}')) =~ '.' ]]; then
-                    remote+="/$(echo $local | cut -d'/' -f $(echo $local | tr -dc '/' | awk '{print length}'))"
-                  elif [[ ${local:$(expr ${#local} - 1):1} != '/' && $(echo $local | cut -d'/' -f $(expr $(echo $local | tr -dc '/' | awk '{print length}') + 1)) =~ '.' ]]; then
-                    remote+=$(echo $local | cut -d'/' -f $(expr $(echo $local | tr -dc '/' | awk '{print length}') + 1))
-                  fi
-                else
-                  if [[ ${local:$(expr ${#local} - 1):1} == '/' && $local =~ '.' ]]; then
-                    remote+="/$local"
-                  elif [[ ${local:$(expr ${#local} - 1):1} != '/' && $local =~ '.' ]]; then
-                    remote+=$local
-                  fi
-                fi
-              fi
+      else # if $remote is not a directory
+        if [[ $mode == "up" ]]; then # if uploading
+          if [[ $remoteendchar == '/' ]]; then # and the user ended the remote uri with a /
+            remote+="/$(expr "//$local" : '.*/\(.*\)')" # add the local filename to $remote
+          else # if the user didn't end it with a /
+            remotefile=$(expr "//$remote" : '.*/\(.*\)')
+            localfile=$(expr "//$local" : '.*/\(.*\)')
+            if [[ ( ! $remotefile =~ '.' ) && $localfile =~ '.' ]]; then
+              # if the local filename has an extension and the remote doesn't,
+              # assume it was intended to be a directory
+              remote+="/$localfile"
             fi
           fi
         fi
       fi
     else
       if [[ $mode == "up" ]]; then
-        if [[ ! -z $(echo $local | tr -dc '/' | awk '{print length}') ]]; then
-          remote=$(echo $local | cut -d'/' -f $(expr $(echo $local | tr -dc '/' | awk '{print length}') + 1))
-        else
-          remote=$local
-        fi
+        remote=$(expr "//$local" : '.*/\(.*\)')
       elif [[ $mode == "down" ]]; then
         if [[ $primarycmd == 'rm' ]]; then
           msg="\033[31;1mfailed:\033[0m deleting http://$cdnurl/"$'\n'"is a directory: http://$cdnurl/"
         else
           msg="\033[31;1mfailed:\033[0m http://$cdnurl/ -> $local"$'\n'"is a directory: http://$cdnurl/"
         fi
-
         display_message "$msg" >&2
-
         exit 1
       fi
     fi
@@ -910,59 +844,40 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
         fi
       fi
     elif [[ $mode == "down" ]]; then
-      if [[ ${local:$(expr ${#local} - 1):1} != '/' ]]; then
-        if [[ -d $local ]]; then
-          if [[ ! -z $(echo $remote | tr -dc '/' | awk '{print length}') ]]; then
-            local+="/$(echo $remote | cut -d'/' -f $(expr $(echo $remote | tr -dc '/' | awk '{print length}') + 1))"
-          else
-            local+="/$remote"
-          fi
-        elif [[ $local != '/dev/null' ]]; then
-          if [[ ! -z $(echo $local | tr -dc '/') ]]; then
-            if [[ ! $(echo $local | cut -d'/' -f $(expr $(echo $local | tr -dc '/' | awk '{print length}') + 1)) =~ '.' ]]; then
-              if [[ ! -z $(echo $remote | tr -dc '/' | awk '{print length}') ]]; then
-                if [[ $(echo $remote | cut -d'/' -f $(expr $(echo $remote | tr -dc '/' | awk '{print length}') + 1)) =~ '.' ]]; then
-                  mkdir $local
-                  local+=$(echo $remote | cut -d'/' -f $(expr $(echo $remote | tr -dc '/' | awk '{print length}') + 1))
-                fi
-              else
-                if [[ $remote =~ '.' ]]; then
-                  mkdir $local
-                  local+=$remote
-                fi
-              fi
-            fi
-          else
-            if [[ ! $local =~ '.' ]]; then
-              if [[ ! -z $(echo $remote | tr -dc '/') ]]; then
-                if [[ $(echo $remote | cut -d'/' -f $(expr $(echo $remote | tr -dc '/' | awk '{print length}') + 1)) =~ '.' ]]; then
-                  mkdir $local
-                  local+=$(echo $remote | cut -d'/' -f $(expr $(echo $remote | tr -dc '/' | awk '{print length}') + 1))
-                fi
-              else
-                if [[ $remote =~ '.' ]]; then
-                  mkdir $local
-                  local+=$remote
-                fi
-              fi
-            fi
-          fi
-        fi
-      else
-        if [[ ! -d $local ]]; then
-          mkdir $local
-        fi
-        if [[ ! -z $(echo $remote | tr -dc '/') ]]; then
-          local+=$(echo $remote | cut -d'/' -f $(expr $(echo $remote | tr -dc '/' | awk '{print length}') + 1))
-        else
-          local+=$remote
-        fi
-      fi
+      remotefile=$(expr "//$remote" : '.*/\(.*\)')
 
-      if [[ ! -z $(echo $remote | tr -dc '/') ]]; then
-        remotefile="$(echo $remote | cut -d'/' -f$(expr $(echo $remote | tr -dc '/' | awk '{print length}') + 1))"
-      else
-        remotefile=$remote
+      if [[ ${local:$(expr ${#local} - 1):1} != '/' ]]; then # if the local path doesn't end with a /...
+        if [[ -d "$local" ]]; then
+          # if $local refers to an existing directory nevertheless,
+          # the filename should be the same as the remote filename
+          local+="/$remotefile"
+        elif [[ $local != '/dev/null' ]]; then
+          localfile=$(expr "//$local" : '.*/\(.*\)')
+          remotefile=$(expr "//$remote" : '.*/\(.*\)')
+
+          if [[ ( ! $localfile =~ '.' ) && $remotefile =~ '.' ]]; then
+            # if the localfile has no extension but the remote
+            # file does, assume it is meant to refer to a directory
+            if [[ ! ( -d "$local" ) ]]; then
+              # if the directory doesn't exist, create it
+              mkdir -p "$local"
+            fi
+            # the local filename should be the same as the remote
+            local+="/$remotefile"
+          else
+            if [[ ! -d "${testvar%\/*}" ]]; then
+              # if the local path without the filename doesn't exist,
+              # create it
+              mkdir -p "${testvar%\/*}"
+            fi
+          fi
+        fi
+      else # if the local path does end with /
+        if [[ ! -d "$local" ]]; then # create the directory if it didn't already exist
+          mkdir -p "$local"
+        fi
+
+        local+="$remotefile"
       fi
 
       if [[ $curroperation == "cp" ]]; then
@@ -1018,7 +933,7 @@ elif [[ $primarycmd == 'iv' ]]; then
     fi
     exit 3
   else
-    destinationpath=${args[0]/cdn:\/\//}
+    destinationpath=${args[0]#cdn:\/\/}
 
     invalidate $destinationpath
   fi
@@ -1052,7 +967,7 @@ elif [[ $primarycmd == 'ls' || $primarycmd == 'll' ]]; then
     exit 3
   fi
 
-  remote=${args[0]/cdn:\/\//}
+  remote=${args[0]#cdn:\/\/}
 
   endchar=${remote:$(expr ${#remote} - 1):1}
 
