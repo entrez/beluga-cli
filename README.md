@@ -3,7 +3,7 @@
 ## overview:
 
 ### usage:
-`beluga-cli <command> [-is] [arguments]`
+`beluga-cli <command> [flags] [arguments]`
 
 ### description:
 beluga-cli is a bash utility which uses [curl](https://curl.haxx.se/) - with the exception of the `ftp` command, which uses [ftp](https://www.gnu.org/software/inetutils/)\* - to efficiently manipulate files on an ftp origin server (like the one provided by beluga) and interact with the [belugacdn](http://www.belugacdn.com/) api.  it can be used to quickly and easily accomplish, and/or as a step in the automation of, many tasks involving the management of objects which fit one or both these criteria.
@@ -16,14 +16,6 @@ in order to get everything working correctly before you start using beluga-cli, 
 **caution:** your origin server username and password will be stored & transmitted as plain text, so ensure they are not used elsewhere.
 
 if you would like to be able to run the utility by typing `beluga-cli` no matter your current location, you can add the directory which contains the file to your `$PATH` variable.
-
-## possible flags:
-
-**-i** : will invalidate the uri of any file modified by the requested operation. see [origin vs cdn](#origin-vs-cdn) for why this may be useful.
-
-**-s** : the program will run silently.
-
-each flag can only be used on certain commands. if a flag is used on a command where it is not standard, beluga-cli will generally print an error message but then ignore the flag and continue.
 
 ## possible commands:
 
@@ -53,6 +45,14 @@ usage: `beluga-cli ll <cdn://uri>`
 
 **iv** : invalidate a file in the cdn's cache, so that another copy must be retrieved from the origin server.  
 usage: `beluga-cli iv [-s] <cdn://uri>`
+
+## possible flags:
+
+**-i** : will invalidate the uri of any file modified by the requested operation. see [origin vs cdn](#origin-vs-cdn) for why this may be useful.
+
+**-s** : the program will run silently.
+
+each flag can only be used on certain commands (see [above](#possible-commands)). if a flag is used on a command where it is not standard, beluga-cli will generally print an error message but then ignore the flag and continue.
 
 ## brief examples:
 

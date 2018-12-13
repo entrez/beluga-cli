@@ -227,19 +227,10 @@ display_help_page ( ) {
   echo
   center_text "\033[1mextended help for beluga-cli\033[0m"
   echo
-  echo -e "\n \033[1;4musage\033[0;1m:\033[0m \033[37mbeluga-cli\033[0m <\033[37mcommand\033[0m> [\033[37m-is\033[0m] [\033[37marguments\033[0m]\n"
-  echo -e " \033[1;4moverview\033[0;1m:\033[0m"
+  echo -e "\n \033[1;4musage\033[0;1m:\033[0m \033[37mbeluga-cli\033[0m <\033[37mcommand\033[0m> [\033[37mflags\033[0m] [\033[37marguments\033[0m]\n"
+  echo -e " \033[1;4mdescription\033[0;1m:\033[0m"
   echo
   word_wrap $(expr $(tput cols) - 5) 5 "beluga-cli is a bash utility which uses \033[4mcurl(1)\033[0m - with the exception of the ftp command, which uses \033[4mftp(1)\033[0m - to efficiently manipulate files on an ftp origin server (like the one provided by beluga) and interact with the belugacdn api (\033[4mhttp://www.belugacdn.com/\033[0m). it can be used to quickly and easily accomplish, and/or as a step in the automation of, many tasks involving the management of objects which fit one or both these criteria."
-  echo -e "\n \033[1;4mpossible flags\033[0;1m:\033[0m"
-  echo
-  echo -en "     \033[1m-i\033[0m     "
-  word_wrap $(expr $(tput cols) - 5) a-12 "if a remote file may be modified by the specified command, beluga-cli will request invalidation of that uri after the operation is complete."
-  echo
-  echo -en "     \033[1m-s\033[0m     "
-  word_wrap $(expr $(tput cols) - 5) a-12 "the program will run silently."
-  echo
-  word_wrap $(expr $(tput cols) - 5) 5 "each flag can only be used on certain commands. if a flag is used on a command where it is not standard, beluga-cli will generally print an error message but then ignore the flag and continue."
   echo -e "\n \033[1;4mpossible commands\033[0;1m:\033[0m"
   echo
   center_text "\033[1mfile manipulation\033[0m\n"
@@ -274,6 +265,15 @@ display_help_page ( ) {
   word_wrap $(expr $(tput cols) - 5) a-12 "invalidate a file in the cdn's cache, so that another copy must be retrieved from the origin server."
   word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37miv\033[0m \033[0m[\033[37m-s\033[0m] <\033[37mcdn://uri\033[0m>"
   echo
+  echo -e "\n \033[1;4mpossible flags\033[0;1m:\033[0m"
+  echo
+  echo -en "     \033[1m-i\033[0m     "
+  word_wrap $(expr $(tput cols) - 5) a-12 "if a remote file may be modified by the specified command, beluga-cli will request invalidation of that uri after the operation is complete."
+  echo
+  echo -en "     \033[1m-s\033[0m     "
+  word_wrap $(expr $(tput cols) - 5) a-12 "the program will run silently."
+  echo
+  word_wrap $(expr $(tput cols) - 5) 5 "each flag can only be used on certain commands. if a flag is used on a command where it is not standard, beluga-cli will generally print an error message but then ignore the flag and continue."
   echo
   echo -e " \033[1;4mbrief examples\033[0;1m:\033[0m"
   echo
