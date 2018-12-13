@@ -1011,6 +1011,14 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
   fi
   exit $result
 elif [[ $primarycmd == 'iv' ]]; then
+  if [[ $inputflags =~ 'i' || $inputflags =~ 'r' ]]; then
+    if [[ $(echo $inputflags | tr -dc 'ir' | awk '{print length}') -gt 1 ]]; then
+      word_wrap $(tput cols) 1 "unexpected flags: -$(echo $inputflags | tr -dc 'ir')" >&2
+    else
+      word_wrap $(tput cols) 1 "unexpected flag: -$(echo $inputflags | tr -dc 'ir')" >&2
+    fi
+  fi
+
   if [[ ${args[0]} == 'help' || ${#args[@]} -gt 1 || ${#args[@]} -lt 1 || ${args[0]:0:6} != 'cdn://' ]]; then
     word_wrap $(expr $(tput cols) - 1) 1 "usage: beluga-cli $primarycmd [-s] <cdn://uri>" >&2
     if [[ ${args[0]} == 'help' ]]; then
@@ -1025,14 +1033,6 @@ elif [[ $primarycmd == 'iv' ]]; then
     fi
     exit 3
   else
-    if [[ $inputflags =~ 'i' || $inputflags =~ 'r' ]]; then
-      if [[ $(echo $inputflags | tr -dc 'ir' | awk '{print length}') -gt 1 ]]; then
-        word_wrap $(tput cols) 1 "unexpected flags: -$(echo $inputflags | tr -dc 'ir')" >&2
-      else
-        word_wrap $(tput cols) 1 "unexpected flag: -$(echo $inputflags | tr -dc 'ir')" >&2
-      fi
-    fi
-
     destinationpath=${args[0]/cdn:\/\//}
 
     invalidate $destinationpath
