@@ -244,7 +244,7 @@ display_help_page ( ) {
   word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mmv \033[0m[\033[37m-is\033[0m] <\033[37mlocalpath\033[0m> <\033[37mcdn://uri\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mlocalpath\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mcdn://uri\033[0m>"
   echo
   echo -e "     \033[1mrm\033[0m     delete a remote file."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mrm \033[0m[\033[37m-isr\033[0m] <\033[37mcdn://uri\033[0m>"
+  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mrm \033[0m[\033[37m-irs\033[0m] <\033[37mcdn://uri\033[0m>"
   echo
   echo
   center_text "\033[1mnavigation/file discovery\033[0m"
@@ -271,11 +271,11 @@ display_help_page ( ) {
   echo -en "     \033[1m-i\033[0m     "
   word_wrap $(expr $(tput cols) - 5) a-12 "if a remote file may be modified by the specified command, beluga-cli will request invalidation of that uri after the operation is complete."
   echo
-  echo -en "     \033[1m-s\033[0m     "
-  word_wrap $(expr $(tput cols) - 5) a-12 "the program will run silently."
-  echo
   echo -en "     \033[1m-r\033[0m     "
   word_wrap $(expr $(tput cols) - 5) a-12 "delete all contents of the specified directory recursively."
+  echo
+  echo -en "     \033[1m-s\033[0m     "
+  word_wrap $(expr $(tput cols) - 5) a-12 "the program will run silently."
   echo
   word_wrap $(expr $(tput cols) - 5) 5 "each flag can only be used on certain commands. if a flag is used on a command where it is not standard, beluga-cli will generally print an error message but then ignore the flag and continue."
   echo
