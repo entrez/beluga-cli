@@ -813,6 +813,14 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
               remote+="/$localfile"
             fi
           fi
+        elif [[ $mode == "down" ]]; then # if downloading
+          if [[ $remoteendchar == '/' ]]; then
+            # if the user included a / where there shouldn't be one,
+            # tell them the verbatim file doesn't exist (even if it otherwise might)
+            msg="\033[31;1mfailed:\033[0m http://$cdnurl/$remote/ -> $local"$'\n'"does not exist: $remote/"
+            display_message "$msg" >&2
+            exit 1
+          fi
         fi
       fi
     else
