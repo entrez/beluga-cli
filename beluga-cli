@@ -139,28 +139,32 @@ display_message ( ) {
 # exit codes:
 #  0 success
 #  1 failure
+# todo: improve coverage of potential curl results
 validate_curl_result ( ) {
   local res=$1
 
   if [[ ! $res -eq 0 ]]; then
-    local msg
+    local msg="\033[31;1mfailed:\033[0m operation not completed [error $res"
     if [[ $res -eq 78 ]]; then
-      msg="\033[31;1mfailed:\033[0m operation not completed [error $res: file not found]"
+      msg+=": file not found]"
     elif [[ $res -eq 6 ]]; then
-      msg="\033[31;1mfailed:\033[0m operation not completed [error $res: couldn't resolve host]"
+      msg+=": couldn't resolve host"
     elif [[ $res -eq 7 ]]; then
-      msg="\033[31;1mfailed:\033[0m operation not completed [error $res: failed to connect]"
+      msg+=": failed to connect"
     elif [[ $res -eq 9 ]]; then
-      msg="\033[31;1mfailed:\033[0m operation not completed [error $res: ftp access denied]"
+      msg+=": ftp access denied"
     elif [[ $res -eq 19 ]]; then
-      msg="\033[31;1mfailed:\033[0m operation not completed [error $res: couldn't access file]"
+      msg+=": couldn't access file"
     elif [[ $res -eq 21 ]]; then
-      msg="\033[31;1mfailed:\033[0m operation not completed [error $res: QUOT cmd failed]"
+      msg+=": QUOT cmd failed"
     elif [[ $res -eq 78 ]]; then
-      msg="\033[31;1mfailed:\033[0m operation not completed [error $res: remote file does not exist]"
-    else
-      msg="\033[31;1mfailed:\033[0m operation not completed [error $res]"
+      msg+=": remote file does not exist"
+    elif [[ $res -eq 23 ]]; then
+      msg+=": write error"
+    elif [[ $res -eq 12 ]]; then
+      msg+=": timeout expired"
     fi
+    msg+="]"
     echo -e "$msg"
     return 1
   else
