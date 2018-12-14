@@ -10,6 +10,77 @@ versionnumber="v0.2.0"
 #  4 missing config
 #  5 partial failure
 
+#beluga_api [ --token-id=<id> --token-secret=<secret> ] [ --user=<user> --password=<pass> ] --request-method=<method> --request-path=<path> [ --request-body=<body> ]
+beluga_api ( ) {
+  args=( $(echo $@) )
+
+  for item in ${args[@]}; do
+    if [[ ${item:0:11} == "--token-id=" ]]; then
+      tokenid=${item##*=}
+    elif [[ ${item:0:15} == "--token-secret=" ]]; then
+      tokensecret=${item##*=}
+    elif [[ ${item:0:7} == "--user=" ]]; then
+      buser=${item##*=}
+    elif [[ ${item:0:11} == "--password=" ]]; then
+      bpassword=${item#--password=}
+    elif [[ ${item:0:17} == "--request-method=" ]]; then
+      requestmethod=${item##*=}
+    elif [[ ${item:0:15} == "--request-path=" ]]; then
+      requestpath=${item##*=}
+    elif [[ ${item:0:15} == "--request-body=" ]]; then
+      requestbody=${item##*=}
+    fi
+  done
+
+  # list sites:
+  # requestpath='/api/cdn/v2/sites'
+  # requestmethod='GET'
+
+  # invalidation:
+  # requestmethod='POST'
+  # requestpath='/api/cdn/v2/invalidations'
+  # requestbody="{\"urls\":[{\"url\":\"$myurl\"}], \"limit-records\": \"50000\"}"
+
+  requesturlbase='https://api.belugacdn.com'
+
+  isodate=$(gdate -u "+%Y-%m-%dT%H:%M:%S.%6NZ" 2> /dev/null)
+  if [[ $? -eq 127 ]]; then
+    isodate=$(date -u "+%Y-%m-%dT%H:%M:%S.%6NZ")
+  fi
+
+  # TOKEN AUTHENTICATION (MUCH BETTER... BUT I CAN'T GET IT WORKING)
+  signstring="$requestmethod:$requestpath:$isodate"
+
+  if [[ ( $requestmethod == 'POST' || $requestmethod == 'PUT' ) && ! -z $requestbody ]]; then
+    bodyhash=$(echo -n $requestbody | openssl sha512)
+    signstring="$signstring:$bodyhash"
+  fi
+
+  if [[ ! ( -z $tokenid || -z $tokensecret) ]]; then
+    signhmac=$(echo -n "$signstring" | openssl sha512 -hmac "$tokensecret")
+    authheader="Token $tokenid $signhmac"
+  elif [[ ! ( -z $buser || -z $bpassword ) ]]; then
+    authheader="Basic $(echo -n $busername:$bpass | openssl base64)"
+  fi
+
+  #echo $signstring
+
+  if [[ ! -z $requestbody ]]; then
+    belugaapiresult=$(curl -kH "Content-type: application/json" \
+         -H "Accept: application/json" \
+         -H "Date: $isodate" \
+         -H "Authorization: $authheader" \
+         -d "$requestbody" "$requesturlbase$requestpath" 2> /dev/null )
+    return $?
+  else
+    belugaapiresult=$(curl -kH "Accept: application/json" \
+         -H "Date: $isodate" \
+         -H "Authorization: $authheader" \
+         "$requesturlbase$requestpath" 2> /dev/null )
+    return $?
+  fi
+}
+
 # usage: display_message <message>
 # attempts to constrain status messages to fit the current terminal size, by
 # replacing certain substrings with shorter aliases, etc
