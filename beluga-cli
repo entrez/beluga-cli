@@ -412,16 +412,24 @@ invalidate ( ) {
   msg="\033[1;92minvalidating:\033[0m $myurl"
   display_message "$msg" >&2
 
-  resp=$(curl -s -kH "Content-type: application/json" \
-     -H "Accept: application/json" \
-     -H "Authorization: Basic $apiauthkey" \
-     -d '{"urls":[{"url":"'$myurl'"}], "limit-records": "50000"}' \
-     'https://api.belugacdn.com/api/cdn/v2/invalidations' 2> /dev/null)
+  resp=$(beluga_api --token-id=$defaulttokenid --token-secret=$defaulttokensecret --request-method=POST --request-path=/api/cdn/v2/invalidations --request-body="{\"urls\":[{\"url\":\"$myurl\"}], \"limit-records\": \"50000\"}")
   result=$?
-  curlstatus=$(echo $resp | cut -d',' -f3 | tr -d '"' | cut -d':' -f2)
 
-  validationresult=$(validate_curl_result $result)
-  exitstatus=$?
+  if [[ $resp =~ "password mismatch" ]]; then
+    validationresult="\033[31;1mfailed:\033[0m operation not completed [user/password incorrect]"
+    exitstatus=1
+  elif [[ $resp =~ "token lookup failed" ]]; then
+    validationresult="\033[31;1mfailed:\033[0m operation not completed [token id lookup failed]"
+    exitstatus=1
+  elif [[ $resp =~ "token validation failed" ]]; then
+    validationresult="\033[31;1mfailed:\033[0m operation not completed [token validation failed]"
+    exitstatus=1
+  else
+    curlstatus=$(echo $resp | cut -d',' -f3 | tr -d '"' | cut -d':' -f2)
+
+    validationresult=$(validate_curl_result $result)
+    exitstatus=$?
+  fi
 
   if [[ $exitstatus -eq 0 ]]; then
     if [[ $curlstatus == "pending" ]]; then
