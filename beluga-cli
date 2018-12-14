@@ -377,6 +377,8 @@ display_help_page ( ) {
   echo
   word_wrap $(expr $(tput cols) - 5) 5 "\033[1mcaution:\033[0m your origin server username and password will be stored & transmitted as plain text, so ensure they are not used elsewhere."
   echo
+  word_wrap $(expr $(tput cols) - 5) 5 "on the other hand, if you choose to create a new token during the setup process, you will be prompted for your belugacdn username and password; unlike your origin server credentials, these are only used for generating the token and are not stored anywhere."
+  echo
   echo -e " \033[1;4mtips & tricks\033[0;1m:\033[0m"
   echo
   word_wrap $(expr $(tput cols) - 5) 5 "\033[1mhelp:\033[0m you can include the word \033[37;1mhelp\033[0m after any command for a quick refresher about the use of that particular command, or by itself (\033[37mbeluga-cli \033[37mhelp\033[0m) to get this page."
