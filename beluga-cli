@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # beluga-cli
-versionnumber="v0.2.0"
+versionnumber="v0.3.0"
 # exit codes:
 #  0 success
 #  1 failure: operation aborted
@@ -9,6 +9,81 @@ versionnumber="v0.2.0"
 #  3 illegal input
 #  4 missing config
 #  5 partial failure
+
+# beluga_api [ --token-id=<id> --token-secret=<secret> ] [ --user=<user> --password=<pass> ]
+# --request-method=<method> --request-path=<path> [ --request-body=<body> ]
+#
+# both token authentication and basic authentication are possible, depending on whether
+# --token-id and --token-secret or --user and --password are included.
+beluga_api ( ) {
+  IFS=$' '
+
+  for item in "$@"; do
+    if [[ ${item:0:11} == "--token-id=" ]]; then
+      tokenid=${item##*=}
+    elif [[ ${item:0:15} == "--token-secret=" ]]; then
+      tokensecret=${item##*=}
+    elif [[ ${item:0:7} == "--user=" ]]; then
+      buser=${item##*=}
+    elif [[ ${item:0:11} == "--password=" ]]; then
+      bpassword=${item#--password=}
+    elif [[ ${item:0:17} == "--request-method=" ]]; then
+      requestmethod=${item##*=}
+    elif [[ ${item:0:15} == "--request-path=" ]]; then
+      requestpath=${item##*=}
+    elif [[ ${item:0:15} == "--request-body=" ]]; then
+      requestbody=${item##*=}
+    fi
+  done
+
+  # list sites:
+  # requestpath='/api/cdn/v2/sites'
+  # requestmethod='GET'
+
+  # invalidation:
+  # beluga_api --token-id= --token-secret= --request-method=POST --request-path=/api/cdn/v2/invalidations --request-body="{\"urls\":[{\"url\":\"$myurl\"}], \"limit-records\": \"50000\"}"
+  # requestmethod='POST'
+  # requestpath='/api/cdn/v2/invalidations'
+  # requestbody="{\"urls\":[{\"url\":\"$myurl\"}], \"limit-records\": \"50000\"}"
+
+  requesturlbase='https://api.belugacdn.com'
+
+  isodate=$(gdate -u "+%Y-%m-%dT%H:%M:%S.%6NZ" 2> /dev/null)
+  if [[ $? -eq 127 ]]; then
+    isodate=$(date -u "+%Y-%m-%dT%H:%M:%S.%6NZ")
+  fi
+
+  # TOKEN AUTHENTICATION (MUCH BETTER... BUT I CAN'T GET IT WORKING)
+  signstring="$requestmethod:$requestpath:$isodate"
+
+  if [[ ( $requestmethod == 'POST' || $requestmethod == 'PUT' ) && ! -z $requestbody ]]; then
+    bodyhash=$(echo -n $requestbody | openssl sha512)
+    signstring="$signstring:$bodyhash"
+  fi
+
+  if [[ ! ( -z $tokenid || -z $tokensecret) ]]; then
+    signhmac=$(echo -n "$signstring" | openssl sha512 -hmac "$tokensecret")
+    authheader="Token $tokenid $signhmac"
+  elif [[ ! ( -z "$buser" || -z "$bpassword" ) ]]; then
+    authheader="Basic $(echo -n "$buser:$bpassword" | openssl base64)"
+  fi
+  #echo $signstring
+
+  if [[ ! -z $requestbody ]]; then
+    curl -kH "Content-type: application/json" \
+         -H "Accept: application/json" \
+         -H "Date: $isodate" \
+         -H "Authorization: $authheader" \
+         -d "$requestbody" "$requesturlbase$requestpath" 2> /dev/null
+    return $?
+  else
+    curl -kH "Accept: application/json" \
+         -H "Date: $isodate" \
+         -H "Authorization: $authheader" \
+         "$requesturlbase$requestpath" 2> /dev/null
+    return $?
+  fi
+}
 
 # usage: display_message <message>
 # attempts to constrain status messages to fit the current terminal size, by
@@ -306,6 +381,8 @@ display_help_page ( ) {
   echo
   word_wrap $(expr $(tput cols) - 5) 5 "\033[1mcaution:\033[0m your origin server username and password will be stored & transmitted as plain text, so ensure they are not used elsewhere."
   echo
+  word_wrap $(expr $(tput cols) - 5) 5 "on the other hand, although you will be prompted for your belugacdn username and password if you choose to create a new token during the setup process, these are only used for generating the token and are not stored anywhere."
+  echo
   echo -e " \033[1;4mtips & tricks\033[0;1m:\033[0m"
   echo
   word_wrap $(expr $(tput cols) - 5) 5 "\033[1mhelp:\033[0m you can include the word \033[37;1mhelp\033[0m after any command for a quick refresher about the use of that particular command, or by itself (\033[37mbeluga-cli \033[37mhelp\033[0m) to get this page."
@@ -333,31 +410,30 @@ display_help_page ( ) {
 #  1  failure
 #  2  uri invalidation already pending
 #
-# currently uses basic authentication because I can't get token authentication
-# working... still working on it.
 invalidate ( ) {
   local myurl=http://$cdnurl/$1
 
   msg="\033[1;92minvalidating:\033[0m $myurl"
   display_message "$msg" >&2
 
-  resp=$(curl -s -kH "Content-type: application/json" \
-     -H "Accept: application/json" \
-     -H "Authorization: Basic $apiauthkey" \
-     -d '{"urls":[{"url":"'$myurl'"}], "limit-records": "50000"}' \
-     'https://api.belugacdn.com/api/cdn/v2/invalidations' 2> /dev/null)
+  resp=$(beluga_api --token-id=$defaulttokenid --token-secret=$defaulttokensecret --request-method=POST --request-path=/api/cdn/v2/invalidations --request-body="{\"urls\":[{\"url\":\"$myurl\"}], \"limit-records\": \"50000\"}")
   result=$?
-  curlstatus=$(echo $resp | cut -d',' -f3 | tr -d '"' | cut -d':' -f2)
 
-  # TOKEN AUTHENTICATION (MUCH BETTER... BUT I CAN'T GET IT WORKING)
-  #bodyhash=`echo -n '{"urls":[{"url":"'$myurl'"}], "limit-records": "50000"}' | openssl dgst -sha512 -hmac "35de8b3ea921ed12ca2248cdc24803d4"`
-  #curl -kH "Content-type: application/json" \
-  #     -H "Accept: application/json" \
-  #     -H "Authorization: Token 1425 "`echo -n POST:/api/cdn/v2/invalidations:$(gdate "+%Y-%m-%dT%H:%M:%S.%NZ"):$bodyhash | openssl dgst -sha512 -hmac "35de8b3ea921ed12ca2248cdc24803d4"` \
-  #     -d '{"urls":[{"url":"'$myurl'"}], "limit-records": "50000"}' 'https://api.belugacdn.com/api/cdn/v2/invalidations'
+  if [[ $resp =~ "password mismatch" ]]; then
+    validationresult="\033[31;1mfailed:\033[0m operation not completed [user/password incorrect]"
+    exitstatus=1
+  elif [[ $resp =~ "token lookup failed" ]]; then
+    validationresult="\033[31;1mfailed:\033[0m operation not completed [token id lookup failed]"
+    exitstatus=1
+  elif [[ $resp =~ "token validation failed" ]]; then
+    validationresult="\033[31;1mfailed:\033[0m operation not completed [token validation failed]"
+    exitstatus=1
+  else
+    curlstatus=$(echo $resp | cut -d',' -f3 | tr -d '"' | cut -d':' -f2)
 
-  validationresult=$(validate_curl_result $result)
-  exitstatus=$?
+    validationresult=$(validate_curl_result $result)
+    exitstatus=$?
+  fi
 
   if [[ $exitstatus -eq 0 ]]; then
     if [[ $curlstatus == "pending" ]]; then
@@ -439,7 +515,13 @@ if [[ -e "$HOME/Library/beluga-cli/.defaults" ]]; then
     if [[ ${serverdefault:$(expr ${#serverdefault} - 1)} == '/' ]]; then
       serverdefault=${serverdefault:0:$(expr ${#serverdefault} - 1)}
     fi
-    apiauthkey=${defaults[1]}
+    if [[ ${serverdefault:0:6} == 'ftp://' ]]; then
+      serverdefault=${serverdefault:6}
+    fi
+
+    defaulttokenid=$( echo ${defaults[1]} | cut -d':' -f1 )
+    defaulttokensecret=$( echo ${defaults[1]} | cut -d':' -f2 )
+
     cdnurl=${defaults[2]}
     if [[ ${cdnurl:$(expr ${#cdnurl} - 1)} == '/' ]]; then
       cdnurl=${cdnurl:0:$(expr ${#cdnurl} - 1)}
@@ -471,15 +553,45 @@ elif [[ $1 == "setup" ]]; then
   word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1mcaution:\033[0m your origin server username and password will be stored and transmitted as plain text, so ensure they are not used elsewhere." >&2
   word_wrap $(expr $(tput cols) - 1) 1 "run \033[1mbeluga-cli \033[1mhelp\033[0m and see the section 'setup' for more information on what to enter here." >&2
   echo
-  read -p " origin server location: " serverlocation </dev/tty
+  read -p " origin server location: ftp://" serverlocation </dev/tty
   read -p " origin server username: " susername </dev/tty
-  read -sp " origin server password: " spass </dev/tty
+  read -p " origin server password: " spass </dev/tty
   echo
   read -p " cdn url: " cdnurl </dev/tty
-  read -p " belugacdn username: " busername </dev/tty
-  read -sp " belugacdn password: " bpass </dev/tty
   echo
-  echo -e "$susername:$spass@$serverlocation\n$(echo -n $busername:$bpass | openssl base64)\n$cdnurl\ncheck:$(echo -ne "$susername:$spass@$serverlocation\n$(echo -n $busername:$bpass | openssl base64)\n$cdnurl" | md5)" > $HOME/Library/beluga-cli/.defaults
+  read -p " use an [e]xisting token for beluga authentication, or [g]enerate a new one? " tchoice </dev/tty
+  while [[ ! ( $(echo $tchoice | tr "[:upper:]" "[:lower:]") == 'g' || $(echo $tchoice | tr "[:upper:]" "[:lower:]") == 'e' ) ]]; do
+    echo -e " \033[31;1millegal input:\033[0m $tchoice"
+    read -p " use an [e]xisting token for beluga authentication, or [g]enerate a new one? " tchoice </dev/tty
+  done
+  echo
+
+  if [[ $(echo $tchoice | tr "[:upper:]" "[:lower:]") == 'g' ]]; then
+    read -p " belugacdn username: " busername </dev/tty
+    read -sp " belugacdn password: " bpass </dev/tty
+    echo -e "\n"
+    echo " generating token..."
+
+    resp=$(beluga_api --user="$busername" --password="$bpass" --request-method=POST --request-path=/api/token/token --request-body='{"description": "beluga-cli token"}')
+
+    if [[ $resp =~ "password mismatch" ]]; then
+      word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1mfailed:\033[0m token not created [user/password incorrect]" >&2
+      exit 1
+    else
+      echo -e " \033[1;92mdone\033[0m"
+      echo
+      id=$(echo $resp | cut -d',' -f4 | tr -d '"' | cut -d':' -f2 | awk '{$1=$1};1')
+      secret=$(echo $resp | cut -d',' -f1 | tr -d '"' | cut -d':' -f2 | awk '{$1=$1};1')
+    fi
+  else
+    read -p " token id: " id </dev/tty
+    read -p " token secret: " secret </dev/tty
+    echo
+  fi
+
+  msg="$susername:$spass@$serverlocation"$'\n'"$id:$secret"$'\n'"$cdnurl"
+  msghash=$(echo -ne "$msg" | md5)
+  echo -e "$msg\ncheck:$msghash" > $HOME/Library/beluga-cli/.defaults
   exit 0
 fi
 
@@ -873,10 +985,10 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
             # the local filename should be the same as the remote
             local+="/$remotefile"
           else
-            if [[ ! -d "${testvar%\/*}" ]]; then
+            if [[ ! -d "${local%\/*}" ]]; then
               # if the local path without the filename doesn't exist,
               # create it
-              mkdir -p "${testvar%\/*}"
+              mkdir -p "${local%\/*}"
             fi
           fi
         fi
