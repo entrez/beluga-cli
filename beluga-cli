@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # beluga-cli
-versionnumber="v0.2.0"
+versionnumber="v0.3.0"
 # exit codes:
 #  0 success
 #  1 failure: operation aborted
@@ -10,7 +10,11 @@ versionnumber="v0.2.0"
 #  4 missing config
 #  5 partial failure
 
-#beluga_api [ --token-id=<id> --token-secret=<secret> ] [ --user=<user> --password=<pass> ] --request-method=<method> --request-path=<path> [ --request-body=<body> ]
+# beluga_api [ --token-id=<id> --token-secret=<secret> ] [ --user=<user> --password=<pass> ]
+# --request-method=<method> --request-path=<path> [ --request-body=<body> ]
+#
+# both token authentication and basic authentication are possible, depending on whether
+# --token-id and --token-secret or --user and --password are included.
 beluga_api ( ) {
   IFS=$' '
 
@@ -406,8 +410,6 @@ display_help_page ( ) {
 #  1  failure
 #  2  uri invalidation already pending
 #
-# currently uses basic authentication because I can't get token authentication
-# working... still working on it.
 invalidate ( ) {
   local myurl=http://$cdnurl/$1
 
