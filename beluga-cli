@@ -985,9 +985,11 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
             # the local filename should be the same as the remote
             local+="/$remotefile"
           else
-            if [[ ! -d "${local%\/*}" ]]; then
-              # if the local path without the filename doesn't exist,
-              # create it
+            if [[ ! ( "${local%\/*}" == $local || -d "${local%\/*}" ) ]]; then
+              # if the local path without the filename doesn't exist, and the
+              # path is not simply the filename (which is the case when downloading
+              # into the current folder and referring to the destinations by
+              # filename alone, create it.
               mkdir -p "${local%\/*}"
             fi
           fi
