@@ -420,13 +420,6 @@ invalidate ( ) {
   result=$?
   curlstatus=$(echo $resp | cut -d',' -f3 | tr -d '"' | cut -d':' -f2)
 
-  # TOKEN AUTHENTICATION (MUCH BETTER... BUT I CAN'T GET IT WORKING)
-  #bodyhash=`echo -n '{"urls":[{"url":"'$myurl'"}], "limit-records": "50000"}' | openssl dgst -sha512 -hmac "35de8b3ea921ed12ca2248cdc24803d4"`
-  #curl -kH "Content-type: application/json" \
-  #     -H "Accept: application/json" \
-  #     -H "Authorization: Token 1425 "`echo -n POST:/api/cdn/v2/invalidations:$(gdate "+%Y-%m-%dT%H:%M:%S.%NZ"):$bodyhash | openssl dgst -sha512 -hmac "35de8b3ea921ed12ca2248cdc24803d4"` \
-  #     -d '{"urls":[{"url":"'$myurl'"}], "limit-records": "50000"}' 'https://api.belugacdn.com/api/cdn/v2/invalidations'
-
   validationresult=$(validate_curl_result $result)
   exitstatus=$?
 
