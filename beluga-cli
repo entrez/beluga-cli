@@ -513,7 +513,13 @@ if [[ -e "$HOME/Library/beluga-cli/.defaults" ]]; then
     if [[ ${serverdefault:$(expr ${#serverdefault} - 1)} == '/' ]]; then
       serverdefault=${serverdefault:0:$(expr ${#serverdefault} - 1)}
     fi
-    apiauthkey=${defaults[1]}
+    if [[ ${serverdefault:0:6} == 'ftp://' ]]; then
+      serverdefault=${serverdefault:6}
+    fi
+
+    defaulttokenid=$( echo ${defaults[1]} | cut -d':' -f1 )
+    defaulttokensecret=$( echo ${defaults[1]} | cut -d':' -f2 )
+
     cdnurl=${defaults[2]}
     if [[ ${cdnurl:$(expr ${#cdnurl} - 1)} == '/' ]]; then
       cdnurl=${cdnurl:0:$(expr ${#cdnurl} - 1)}
@@ -545,15 +551,45 @@ elif [[ $1 == "setup" ]]; then
   word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1mcaution:\033[0m your origin server username and password will be stored and transmitted as plain text, so ensure they are not used elsewhere." >&2
   word_wrap $(expr $(tput cols) - 1) 1 "run \033[1mbeluga-cli \033[1mhelp\033[0m and see the section 'setup' for more information on what to enter here." >&2
   echo
-  read -p " origin server location: " serverlocation </dev/tty
+  read -p " origin server location: ftp://" serverlocation </dev/tty
   read -p " origin server username: " susername </dev/tty
-  read -sp " origin server password: " spass </dev/tty
+  read -p " origin server password: " spass </dev/tty
   echo
   read -p " cdn url: " cdnurl </dev/tty
-  read -p " belugacdn username: " busername </dev/tty
-  read -sp " belugacdn password: " bpass </dev/tty
   echo
-  echo -e "$susername:$spass@$serverlocation\n$(echo -n $busername:$bpass | openssl base64)\n$cdnurl\ncheck:$(echo -ne "$susername:$spass@$serverlocation\n$(echo -n $busername:$bpass | openssl base64)\n$cdnurl" | md5)" > $HOME/Library/beluga-cli/.defaults
+  read -p " use an [e]xisting token for beluga authentication, or [g]enerate a new one? " tchoice </dev/tty
+  while [[ ! ( $(echo $tchoice | tr "[:upper:]" "[:lower:]") == 'g' || $(echo $tchoice | tr "[:upper:]" "[:lower:]") == 'e' ) ]]; do
+    echo -e " \033[31;1millegal input:\033[0m $tchoice"
+    read -p " use an [e]xisting token for beluga authentication, or [g]enerate a new one? " tchoice </dev/tty
+  done
+  echo
+
+  if [[ $(echo $tchoice | tr "[:upper:]" "[:lower:]") == 'g' ]]; then
+    read -p " belugacdn username: " busername </dev/tty
+    read -sp " belugacdn password: " bpass </dev/tty
+    echo -e "\n"
+    echo " generating token..."
+
+    resp=$(beluga_api --user="$busername" --password="$bpass" --request-method=POST --request-path=/api/token/token --request-body='{"description": "beluga-cli token"}')
+
+    if [[ $resp =~ "password mismatch" ]]; then
+      word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1mfailed:\033[0m token not created [user/password incorrect]" >&2
+      exit 1
+    else
+      echo -e " \033[1;92mdone\033[0m"
+      echo
+      id=$(echo $resp | cut -d',' -f4 | tr -d '"' | cut -d':' -f2 | awk '{$1=$1};1')
+      secret=$(echo $resp | cut -d',' -f1 | tr -d '"' | cut -d':' -f2 | awk '{$1=$1};1')
+    fi
+  else
+    read -p " token id: " id </dev/tty
+    read -p " token secret: " secret </dev/tty
+    echo
+  fi
+
+  msg="$susername:$spass@$serverlocation"$'\n'"$id:$secret"$'\n'"$cdnurl"
+  msghash=$(echo -ne "$msg" | md5)
+  echo -e "$msg\ncheck:$msghash" > $HOME/Library/beluga-cli/.defaults
   exit 0
 fi
 
