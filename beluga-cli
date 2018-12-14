@@ -12,6 +12,7 @@ versionnumber="v0.2.0"
 
 #beluga_api [ --token-id=<id> --token-secret=<secret> ] [ --user=<user> --password=<pass> ] --request-method=<method> --request-path=<path> [ --request-body=<body> ]
 beluga_api ( ) {
+  IFS=$' '
   args=( $(echo $@) )
 
   for item in ${args[@]}; do
