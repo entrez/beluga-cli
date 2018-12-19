@@ -185,6 +185,8 @@ validate_curl_result ( ) {
       msg+=": couldn't use REST"
     elif [[ $res -eq 78 ]]; then
       msg+=": remote file does not exist"
+    elif [[ $res -eq 87 ]]; then
+      msg+=": can't parse file list"
     fi
     msg+="]"
     echo -e "$msg"
