@@ -695,13 +695,13 @@ elif [[ $primarycmd == 'ftp' ]]; then
     word_wrap $(tput cols) 1 "$msg" >&2
   fi
 
-  if [[ ${args[0]} == 'help' || ${#args[@]} -gt 1 ]]; then
+  if [[ ${args[0]} == 'help' || ${#args[@]} -gt 0 ]]; then
     word_wrap $(expr $(tput cols) - 1) 1 "usage: beluga-cli ftp" >&2
     if [[ ${args[0]} == 'help' ]]; then
       word_wrap $(expr $(tput cols) - 1) 1 "logs on to the origin server in an interactive ftp session." >&2
       word_wrap $(expr $(tput cols) - 1) 1 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
       exit 0
-    elif [[ ${#args[@]} -gt 1 ]]; then
+    elif [[ ${#args[@]} -gt 0 ]]; then
       word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too many args" >&2
       exit 3
     fi
