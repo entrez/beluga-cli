@@ -139,28 +139,54 @@ display_message ( ) {
 # exit codes:
 #  0 success
 #  1 failure
+# todo: improve coverage of potential curl results
 validate_curl_result ( ) {
   local res=$1
 
   if [[ ! $res -eq 0 ]]; then
-    local msg
+    local msg="\033[31;1mfailed:\033[0m operation not completed [error $res"
     if [[ $res -eq 78 ]]; then
-      msg="\033[31;1mfailed:\033[0m operation not completed [error $res: file not found]"
+      msg+=": file not found]"
     elif [[ $res -eq 6 ]]; then
-      msg="\033[31;1mfailed:\033[0m operation not completed [error $res: couldn't resolve host]"
+      msg+=": couldn't resolve host"
     elif [[ $res -eq 7 ]]; then
-      msg="\033[31;1mfailed:\033[0m operation not completed [error $res: failed to connect]"
+      msg+=": failed to connect"
+    elif [[ $res -eq 8 ]]; then
+      msg+=": unknown response"
     elif [[ $res -eq 9 ]]; then
-      msg="\033[31;1mfailed:\033[0m operation not completed [error $res: ftp access denied]"
+      msg+=": ftp access denied"
+    elif [[ $res -eq 10 ]]; then
+      msg+=": accept failed"
+    elif [[ $res -eq 11 ]]; then
+      msg+=": weird PASS reply"
+    elif [[ $res -eq 12 ]]; then
+      msg+=": timeout expired"
+    elif [[ $res -eq 13 ]]; then
+      msg+=": weird PASV reply"
+    elif [[ $res -eq 14 ]]; then
+      msg+=": unknown FTP 227 format"
+    elif [[ $res -eq 15 ]]; then
+      msg+=": couldn't get host"
+    elif [[ $res -eq 17 ]]; then
+      msg+=": couldn't set binary"
     elif [[ $res -eq 19 ]]; then
-      msg="\033[31;1mfailed:\033[0m operation not completed [error $res: couldn't access file]"
+      msg+=": couldn't access file"
     elif [[ $res -eq 21 ]]; then
-      msg="\033[31;1mfailed:\033[0m operation not completed [error $res: QUOT cmd failed]"
+      msg+=": QUOT cmd failed"
+    elif [[ $res -eq 23 ]]; then
+      msg+=": write error"
+    elif [[ $res -eq 27 ]]; then
+      msg+=": out of memory"
+    elif [[ $res -eq 28 ]]; then
+      msg+=": operation timeout"
+    elif [[ $res -eq 30 ]]; then
+      msg+=": PORT failed"
+    elif [[ $res -eq 31 ]]; then
+      msg+=": couldn't use REST"
     elif [[ $res -eq 78 ]]; then
-      msg="\033[31;1mfailed:\033[0m operation not completed [error $res: remote file does not exist]"
-    else
-      msg="\033[31;1mfailed:\033[0m operation not completed [error $res]"
+      msg+=": remote file does not exist"
     fi
+    msg+="]"
     echo -e "$msg"
     return 1
   else
@@ -506,7 +532,7 @@ recursive_delete ( ) {
 
 if [[ -e "$HOME/Library/beluga-cli/.defaults" ]]; then
   defaults=( $(cat $HOME/Library/beluga-cli/.defaults) )
-  if [[ $(echo -ne "${defaults[0]}\n${defaults[1]}\n${defaults[2]}" | md5) != $(echo ${defaults[3]} | cut -d':' -f2) ]]; then
+  if [[ $(echo -ne "${defaults[0]}\n${defaults[1]}\n${defaults[2]}" | openssl md5) != $(echo ${defaults[3]} | cut -d':' -f2) ]]; then
     word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1merror:\033[0m config file checksum invalid" >&2
     word_wrap $(expr $(tput cols) - 1) 1 "run \033[1mbeluga-cli setup\033[0m to set up a new defaults file, or \033[1mbeluga-cli \033[1mhelp\033[0m for more information." >&2
     exit 4
@@ -590,7 +616,7 @@ elif [[ $1 == "setup" ]]; then
   fi
 
   msg="$susername:$spass@$serverlocation"$'\n'"$id:$secret"$'\n'"$cdnurl"
-  msghash=$(echo -ne "$msg" | md5)
+  msghash=$(echo -ne "$msg" | openssl md5)
   echo -e "$msg\ncheck:$msghash" > $HOME/Library/beluga-cli/.defaults
   exit 0
 fi
