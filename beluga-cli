@@ -151,18 +151,40 @@ validate_curl_result ( ) {
       msg+=": couldn't resolve host"
     elif [[ $res -eq 7 ]]; then
       msg+=": failed to connect"
+    elif [[ $res -eq 8 ]]; then
+      msg+=": unknown response"
     elif [[ $res -eq 9 ]]; then
       msg+=": ftp access denied"
+    elif [[ $res -eq 10 ]]; then
+      msg+=": accept failed"
+    elif [[ $res -eq 11 ]]; then
+      msg+=": weird PASS reply"
+    elif [[ $res -eq 12 ]]; then
+      msg+=": timeout expired"
+    elif [[ $res -eq 13 ]]; then
+      msg+=": weird PASV reply"
+    elif [[ $res -eq 14 ]]; then
+      msg+=": unknown FTP 227 format"
+    elif [[ $res -eq 15 ]]; then
+      msg+=": couldn't get host"
+    elif [[ $res -eq 17 ]]; then
+      msg+=": couldn't set binary"
     elif [[ $res -eq 19 ]]; then
       msg+=": couldn't access file"
     elif [[ $res -eq 21 ]]; then
       msg+=": QUOT cmd failed"
-    elif [[ $res -eq 78 ]]; then
-      msg+=": remote file does not exist"
     elif [[ $res -eq 23 ]]; then
       msg+=": write error"
-    elif [[ $res -eq 12 ]]; then
-      msg+=": timeout expired"
+    elif [[ $res -eq 27 ]]; then
+      msg+=": out of memory"
+    elif [[ $res -eq 28 ]]; then
+      msg+=": operation timeout"
+    elif [[ $res -eq 30 ]]; then
+      msg+=": PORT failed"
+    elif [[ $res -eq 31 ]]; then
+      msg+=": couldn't use REST"
+    elif [[ $res -eq 78 ]]; then
+      msg+=": remote file does not exist"
     fi
     msg+="]"
     echo -e "$msg"
