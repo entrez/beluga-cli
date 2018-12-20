@@ -146,7 +146,7 @@ validate_curl_result ( ) {
   if [[ ! $res -eq 0 ]]; then
     local msg="\033[31;1mfailed:\033[0m operation not completed [error $res"
     if [[ $res -eq 78 ]]; then
-      msg+=": file not found]"
+      msg+=": file not found"
     elif [[ $res -eq 6 ]]; then
       msg+=": couldn't resolve host"
     elif [[ $res -eq 7 ]]; then
