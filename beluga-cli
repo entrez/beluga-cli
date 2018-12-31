@@ -818,19 +818,20 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
 
       if [[ $curroperation == 'mv' ]]; then
         msg="\033[1;92mmoving:\033[0m http://$cdnurl/$source -> http://$cdnurl/$destination"
-        tempcurloutput=$(curl "ftp://$serverdefault/$source" -Q "-DELE $sourcefile" 2> /dev/null)
+        curl "ftp://$serverdefault/$source" -Q "-DELE $sourcefile" > "$HOME/beluga-cli/.curltmp" 2> /dev/null
         result=$?
       elif [[ $curroperation == 'cp' ]]; then
         msg="\033[1;92mcopying:\033[0m http://$cdnurl/$source -> http://$cdnurl/$destination"
-        tempcurloutput=$(curl "ftp://$serverdefault/$source" 2> /dev/null)
+        curl "ftp://$serverdefault/$source" > "$HOME/beluga-cli/.curltmp" 2> /dev/null
         result=$?
       fi
 
       display_message "$msg" >&2
 
       if [[ $result -eq 0 ]]; then
-        echo $tempcurloutput | curl -T - "ftp://$serverdefault/$destination" --ftp-create-dirs 2> /dev/null
+        curl -T "$HOME/beluga-cli/.curltmp" "ftp://$serverdefault/$destination" --ftp-create-dirs 2> /dev/null
         result=$?
+        rm "$HOME/beluga-cli/.curltmp"
       fi
 
       msg=$(validate_curl_result $result)
