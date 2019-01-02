@@ -15,11 +15,15 @@ update_self ( ) {
   word_wrap $(tput cols) 0 "$msg" >&2
 
   local script_location="$(dirname "$0")/$(basename "$0")"
-  local item_head=$(curl -s -r 0-56 https://raw.githubusercontent.com/entrez/beluga-cli/master/beluga-cli)
+  local item_head
+  item_head=$(curl -s -r 0-56 "https://raw.githubusercontent.com/entrez/beluga-cli/master/beluga-cli")
   local exit_code=$?
 
-  if [[ exit_code -ne 0 ]]; then
-    msg=$(validate_curl_result exit_code)
+  if [[ $exit_code -ne 0 ]]; then
+    msg=$(validate_curl_result $exit_code)
+  elif [[ $item_head =~ "404: Not Found" ]]; then
+    msg="\033[31;1mfailed:\033[0m operation not completed [HTTP 404]"
+    exit_code=1
   else
     local new_version=""
 
@@ -32,7 +36,7 @@ update_self ( ) {
       fi
     done
 
-    if [[ new_version == "" ]]; then
+    if [[ $new_version == "" ]]; then
       msg="\033[31;1mfailed:\033[0m operation not completed [can't find version #]"
       exit_code=1
     else
@@ -47,7 +51,7 @@ update_self ( ) {
         fi
       done
 
-      if [[ do_update -eq 1 ]]; then
+      if [[ $do_update -eq 1 ]]; then
         msg="\033[1;92msuccess:\033[0m updating beluga-cli from version ${VERSION_NUMBER:1} to version $new_version" >&2
         word_wrap $(tput cols) 0 "$msg" >&2
 
@@ -60,10 +64,10 @@ update_self ( ) {
         exit_code=0
       fi
     fi
-
-    word_wrap $(tput cols) 0 "$msg" >&2
-    exit $exit_code
   fi
+
+  word_wrap $(tput cols) 0 "$msg" >&2
+  exit $exit_code
 }
 
 # beluga_api [ --token-id=<id> --token-secret=<secret> ] [ --user=<user> --password=<pass> ]
