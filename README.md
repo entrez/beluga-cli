@@ -15,6 +15,8 @@ beluga-cli is a bash utility which uses [curl](https://curl.haxx.se/) - with the
 ### setup:
 in order to get everything working correctly before you start using beluga-cli, run the command `beluga-cli setup` to define the location and credentials used for your origin, the credentials used for belugacdn, and so on. you will be given the choice between using an existing token for authentication with the belugacdn api or generating a new one.
 
+note that the "origin server location" should include the entire path used as the origin on belugacdn. if you entered an additional path in your property's settings page on beluga, include it here. if you use beluga's origin solution, this may also include a directory with your property name (e.g. X.X.X.X/cdn.your.site/).
+
 **caution:** your origin server username and password will be stored & transmitted as plain text, so ensure they are not used elsewhere.
 
 on the other hand, although you will be prompted for your belugacdn username and password if you choose to create a new token during the setup process, these are only used for generating the token and are not stored anywhere.
@@ -121,9 +123,6 @@ the following examples should help to demonstrate what normal input and output l
    ```
 
 ## tips & tricks:
-
-### setup:
-the "origin server location" in `beluga-cli setup` should include the entire path used as the origin on belugacdn. if you entered an additional path in your property's settings page on beluga, include it here. if you use beluga's origin solution, this may also include a directory with your property name (e.g. X.X.X.X/cdn.your.site/).
 
 ### remote uri formatting:
 note that in all commands, remote uris should be be formatted as cdn://path. for instance, in order to download the file http://cdn.your.site/dir1/file.txt, you could run the command `beluga-cli cp cdn://dir1/file.txt ~/file.txt`. as a general rule, cdn://path/to/obj corresponds to http://cdn.your.site/path/to/obj.
