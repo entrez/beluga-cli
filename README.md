@@ -122,7 +122,7 @@ the following examples should help to demonstrate what normal input and output l
    done
    ```
 
-## tips & tricks:
+## other tips & tricks:
 
 ### remote uri formatting:
 note that in all commands, remote uris should be be formatted as cdn://path. for instance, in order to download the file http://cdn.your.site/dir1/file.txt, you could run the command `beluga-cli cp cdn://dir1/file.txt ~/file.txt`. as a general rule, cdn://path/to/obj corresponds to http://cdn.your.site/path/to/obj.
