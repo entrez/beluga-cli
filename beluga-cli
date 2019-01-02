@@ -413,6 +413,10 @@ display_help_page ( ) {
   word_wrap $(expr $(tput cols) - 5) a-12 "check whether the version of beluga-cli running is the latest available; if a newer version exists, update the local file."
   word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mupdate\033[0m"
   echo
+  echo -en "    \033[1mhelp\033[0m    "
+  word_wrap $(expr $(tput cols) - 5) a-12 "get help about a command, or display this page if no command is specified."
+  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[0m[<\033[37mcommand\033[0m>] \033[37mhelp\033[0m"
+  echo
   echo -e "\n \033[1;4mpossible flags\033[0;1m:\033[0m"
   echo
   echo -en "     \033[1m-i\033[0m     "
@@ -479,8 +483,6 @@ display_help_page ( ) {
   word_wrap $(expr $(tput cols) - 5) 5 "on the other hand, although you will be prompted for your belugacdn username and password if you choose to create a new token during the setup process, these are only used for generating the token and are not stored anywhere."
   echo
   echo -e " \033[1;4mtips & tricks\033[0;1m:\033[0m"
-  echo
-  word_wrap $(expr $(tput cols) - 5) 5 "\033[1mhelp:\033[0m you can include the word \033[37;1mhelp\033[0m after any command for a quick refresher about the use of that particular command, or by itself (\033[37mbeluga-cli \033[37mhelp\033[0m) to get this page."
   echo
   if [[ -z $cdnurl ]]; then
     word_wrap $(expr $(tput cols) - 5) 5 "\033[1msetup:\033[0m the \"origin server location\" in \033[37mbeluga-cli \033[37msetup\033[0m should include the entire path used as the origin on belugacdn. if you entered an additional path in your property's settings page on beluga, include it here. if you use beluga's origin solution, this may also include a directory with your property name (e.g. X.X.X.X/cdn.your.site/)"
