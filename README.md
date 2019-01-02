@@ -1,5 +1,7 @@
 # beluga-cli
 
+v0.4.0
+
 ## overview:
 
 ### usage:
