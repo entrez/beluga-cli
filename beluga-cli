@@ -405,6 +405,13 @@ display_help_page ( ) {
   echo -en "     \033[1miv\033[0m     "
   word_wrap $(expr $(tput cols) - 5) a-12 "invalidate a file in the cdn's cache, so that another copy must be retrieved from the origin server."
   word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37miv\033[0m \033[0m[\033[37m-s\033[0m] <\033[37mcdn://uri\033[0m>"
+
+  echo
+  echo
+  center_text "\033[1minternal tools\033[0m\n"
+  echo -en "   \033[1mupdate\033[0m   "
+  word_wrap $(expr $(tput cols) - 5) a-12 "check whether the version of beluga-cli running is the latest available; if a newer version exists, update the local file."
+  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mupdate\033[0m"
   echo
   echo -e "\n \033[1;4mpossible flags\033[0;1m:\033[0m"
   echo
