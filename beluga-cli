@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # beluga-cli
-versionnumber="v0.3.0"
+VERSION_NUMBER="v0.4.1"
 # exit codes:
 #  0 success
 #  1 failure: operation aborted
@@ -9,6 +9,66 @@ versionnumber="v0.3.0"
 #  3 illegal input
 #  4 missing config
 #  5 partial failure
+
+update_self ( ) {
+  local msg="checking for new version of beluga-cli"
+  word_wrap $(tput cols) 0 "$msg" >&2
+
+  local script_location="$(dirname "$0")/$(basename "$0")"
+  local item_head
+  item_head=$(curl -s -r 0-56 "https://raw.githubusercontent.com/entrez/beluga-cli/master/beluga-cli")
+  local exit_code=$?
+
+  if [[ $exit_code -ne 0 ]]; then
+    msg=$(validate_curl_result $exit_code)
+  elif [[ $item_head =~ "404: Not Found" ]]; then
+    msg="\033[31;1mfailed:\033[0m operation not completed [HTTP 404]"
+    exit_code=1
+  else
+    local new_version=""
+
+    local IFS=$'\n'
+    for line in $item_head; do
+      if [[ ${line:0:15} == "VERSION_NUMBER=" ]]; then
+        new_version=${line:16:${#line}-17}
+        new_version=${new_version#'v'}
+        break
+      fi
+    done
+
+    if [[ $new_version == "" ]]; then
+      msg="\033[31;1mfailed:\033[0m operation not completed [can't find version #]"
+      exit_code=1
+    else
+      local do_update=0
+      for n in $(seq 1 3); do
+        if [[ $(echo $new_version | cut -d'.' -f$n) > $(echo ${VERSION_NUMBER:1} | cut -d'.' -f$n) ]]; then
+          do_update=1
+          break
+        elif [[ $(echo $new_version | cut -d'.' -f$n) < $(echo ${VERSION_NUMBER:1} | cut -d'.' -f$n) ]]; then
+          do_update=0
+          break
+        fi
+      done
+
+      if [[ $do_update -eq 1 ]]; then
+        msg="\033[1;92msuccess:\033[0m updating beluga-cli from version ${VERSION_NUMBER:1} to version $new_version" >&2
+        word_wrap $(tput cols) 0 "$msg" >&2
+
+        curl -s https://raw.githubusercontent.com/entrez/beluga-cli/master/beluga-cli -o $script_location
+        exit_code=$?
+
+        msg=$(validate_curl_result $exit_code)
+      else
+        msg="\033[1;92mdone:\033[0m you already have the latest version of beluga-cli ($VERSION_NUMBER)"
+        exit_code=0
+      fi
+    fi
+  fi
+
+  word_wrap $(tput cols) 0 "$msg" >&2
+  exit $exit_code
+}
 
 # beluga_api [ --token-id=<id> --token-secret=<secret> ] [ --user=<user> --password=<pass> ]
 # --request-method=<method> --request-path=<path> [ --request-body=<body> ]
@@ -306,7 +366,7 @@ word_wrap ( ) {
 display_help_page ( ) {
   echo
   echo
-  center_text "\033[1mextended help for beluga-cli $versionnumber\033[0m"
+  center_text "\033[1mextended help for beluga-cli $VERSION_NUMBER\033[0m"
   echo
   echo -e "\n \033[1;4musage\033[0;1m:\033[0m \033[37mbeluga-cli\033[0m <\033[37mcommand\033[0m> [\033[37mflags\033[0m] [\033[37marguments\033[0m]\n"
   echo -e " \033[1;4mdescription\033[0;1m:\033[0m"
@@ -329,7 +389,7 @@ display_help_page ( ) {
   echo
   center_text "\033[1mnavigation/file discovery\033[0m"
   echo
-  echo -ne "     \033[1mftp\033[0m    "
+  echo -ne "    \033[1mftp\033[0m     "
   word_wrap $(expr $(tput cols) - 5) a-12 "log on to the origin server in an interactive ftp session."
   word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mftp\033[0m"
   echo
@@ -345,6 +405,17 @@ display_help_page ( ) {
   echo -en "     \033[1miv\033[0m     "
   word_wrap $(expr $(tput cols) - 5) a-12 "invalidate a file in the cdn's cache, so that another copy must be retrieved from the origin server."
   word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37miv\033[0m \033[0m[\033[37m-s\033[0m] <\033[37mcdn://uri\033[0m>"
+
+  echo
+  echo
+  center_text "\033[1minternal tools\033[0m\n"
+  echo -en "   \033[1mupdate\033[0m   "
+  word_wrap $(expr $(tput cols) - 5) a-12 "check whether the version of beluga-cli running is the latest available; if a newer version exists, update the local file."
+  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mupdate\033[0m"
+  echo
+  echo -en "    \033[1mhelp\033[0m    "
+  word_wrap $(expr $(tput cols) - 5) a-12 "get help about a command, or display this page if no command is specified."
+  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[0m[<\033[37mcommand\033[0m>] \033[37mhelp\033[0m"
   echo
   echo -e "\n \033[1;4mpossible flags\033[0;1m:\033[0m"
   echo
@@ -407,21 +478,21 @@ display_help_page ( ) {
   echo
   word_wrap $(expr $(tput cols) - 5) 5 "in order to get everything working correctly before you start using beluga-cli, you must run the command \033[37mbeluga-cli setup\033[0m to define the location and credentials used for your origin, the credentials used for belugacdn, and so on."
   echo
+  if [[ -z $cdnurl ]]; then
+    word_wrap $(expr $(tput cols) - 5) 5 "note that the \"origin server location\" should include the entire path used as the origin on belugacdn. if you entered an additional path in your property's settings page on beluga, include it here. if you use beluga's origin solution, this may also include a directory with your property name (e.g. X.X.X.X/cdn.your.site/)"
+  else
+    word_wrap $(expr $(tput cols) - 5) 5 "note that the \"origin server location\" should include the entire path used as the origin on belugacdn. if you entered an additional path in your property's settings page on beluga, include it here. if you use beluga's origin solution, this may also include a directory with your property name (e.g. X.X.X.X/$cdnurl/)"
+  fi
+  echo
   word_wrap $(expr $(tput cols) - 5) 5 "\033[1mcaution:\033[0m your origin server username and password will be stored & transmitted as plain text, so ensure they are not used elsewhere."
   echo
   word_wrap $(expr $(tput cols) - 5) 5 "on the other hand, although you will be prompted for your belugacdn username and password if you choose to create a new token during the setup process, these are only used for generating the token and are not stored anywhere."
   echo
-  echo -e " \033[1;4mtips & tricks\033[0;1m:\033[0m"
-  echo
-  word_wrap $(expr $(tput cols) - 5) 5 "\033[1mhelp:\033[0m you can include the word \033[37;1mhelp\033[0m after any command for a quick refresher about the use of that particular command, or by itself (\033[37mbeluga-cli \033[37mhelp\033[0m) to get this page."
+  echo -e " \033[1;4mother tips & tricks\033[0;1m:\033[0m"
   echo
   if [[ -z $cdnurl ]]; then
-    word_wrap $(expr $(tput cols) - 5) 5 "\033[1msetup:\033[0m the \"origin server location\" in \033[37mbeluga-cli \033[37msetup\033[0m should include the entire path used as the origin on belugacdn. if you entered an additional path in your property's settings page on beluga, include it here. if you use beluga's origin solution, this may also include a directory with your property name (e.g. X.X.X.X/cdn.your.site/)"
-    echo
     word_wrap $(expr $(tput cols) - 5) 5 "\033[1mremote uri formatting:\033[0m note that in all commands, remote uris should be be formatted as cdn://path. for instance, in order to download the file http://cdn.your.site/dir1/file.txt, you could run the command \033[37mbeluga-cli \033[37mcp \033[37mcdn://dir1/file.txt \033[37m~/file.txt\033[0m. as a general rule, cdn://path/to/obj corresponds to http://cdn.your.site/path/to/obj."
   else
-    word_wrap $(expr $(tput cols) - 5) 5 "\033[1msetup:\033[0m the \"origin server location\" in \033[37mbeluga-cli \033[37msetup\033[0m should include the entire path used as the origin on belugacdn. if you entered an additional path in your property's settings page on beluga, include it here. if you use beluga's origin solution, this may also include a directory with your property name (e.g. X.X.X.X/$cdnurl/)"
-    echo
     word_wrap $(expr $(tput cols) - 5) 5 "\033[1mremote uri formatting:\033[0m note that in all commands, remote uris should be formatted as cdn://path. for instance, in order to download the file http://$cdnurl/dir1/file.txt, you could run the command \033[37mbeluga-cli \033[37mcp \033[37mcdn://dir1/file.txt \033[37m~/file.txt\033[0m. as a general rule, cdn://path/to/obj corresponds to http://$cdnurl/path/to/obj."
   fi
   echo
@@ -561,7 +632,7 @@ if [[ -e "$HOME/beluga-cli/.defaults" ]]; then
     fi
   fi
 fi
-if [[ $1 != "help" && $1 != "setup" ]]; then
+if [[ $1 != "help" && $1 != "setup" && $1 != "update" ]]; then
   if [[ ! -d "$HOME/beluga-cli" ]]; then
     word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1merror:\033[0m missing config directory ~/beluga-cli. run \033[1mbeluga-cli setup\033[0m to configure defaults, or \033[1mbeluga-cli \033[1mhelp\033[0m for more information." >&2
     exit 4
@@ -621,6 +692,9 @@ elif [[ $1 == "setup" ]]; then
   msghash=$(echo -ne "$msg" | openssl md5)
   echo -e "$msg\ncheck:$msghash" > $HOME/beluga-cli/.defaults
   exit 0
+elif [[ $1 == "update" ]]; then
+  update_self
+  exit $?
 fi
 
 inputflags=''

@@ -1,5 +1,7 @@
 # beluga-cli
 
+v0.4.1
+
 ## overview:
 
 ### usage:
@@ -12,6 +14,8 @@ beluga-cli is a bash utility which uses [curl](https://curl.haxx.se/) - with the
 
 ### setup:
 in order to get everything working correctly before you start using beluga-cli, run the command `beluga-cli setup` to define the location and credentials used for your origin, the credentials used for belugacdn, and so on. you will be given the choice between using an existing token for authentication with the belugacdn api or generating a new one.
+
+note that the "origin server location" should include the entire path used as the origin on belugacdn. if you entered an additional path in your property's settings page on beluga, include it here. if you use beluga's origin solution, this may also include a directory with your property name (e.g. X.X.X.X/cdn.your.site/).
 
 **caution:** your origin server username and password will be stored & transmitted as plain text, so ensure they are not used elsewhere.
 
@@ -47,6 +51,14 @@ usage: `beluga-cli ll <cdn://uri>`
 
 **iv** : invalidate a file in the cdn's cache, so that another copy must be retrieved from the origin server.  
 usage: `beluga-cli iv [-s] <cdn://uri>`
+
+### internal tools:
+
+**update** : check whether the version of beluga-cli running is the latest available; if a newer version exists, update the local file.  
+usage: `beluga-cli update`
+
+**help** : get help about a command, or display the general help page (similar to this readme) if no command is specified.  
+usage: `beluga-cli [<command>] help`
 
 ## possible flags:
 
@@ -110,13 +122,7 @@ the following examples should help to demonstrate what normal input and output l
    done
    ```
 
-## tips & tricks:
-
-### help:
-you can include the word `help` after any command for a quick refresher about the use of that particular command, or by itself (`beluga-cli help`) to get a general help page like this one.
-
-### setup:
-the "origin server location" in `beluga-cli setup` should include the entire path used as the origin on belugacdn. if you entered an additional path in your property's settings page on beluga, include it here. if you use beluga's origin solution, this may also include a directory with your property name (e.g. X.X.X.X/cdn.your.site/).
+## other tips & tricks:
 
 ### remote uri formatting:
 note that in all commands, remote uris should be be formatted as cdn://path. for instance, in order to download the file http://cdn.your.site/dir1/file.txt, you could run the command `beluga-cli cp cdn://dir1/file.txt ~/file.txt`. as a general rule, cdn://path/to/obj corresponds to http://cdn.your.site/path/to/obj.
