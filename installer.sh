@@ -17,7 +17,7 @@ else
 fi
 
 if [[ $overwrite_response == "y" ]]; then
-  if [[ ! -z $(ls $DIR | grep beluga-cli ) && -d "/usr/local/bin" && $PATH =~ "/usr/local/bin" ]]; then
+  if [[ -e "$DIR/beluga-cli" && -d "/usr/local/bin" && $PATH =~ "/usr/local/bin" ]]; then
     if [[ -x "$DIR/beluga-cli" ]]; then
       cp "$DIR/beluga-cli" /usr/local/bin/beluga-cli >&2
       cmd_result=$?
@@ -41,8 +41,11 @@ if [[ $overwrite_response == "y" ]]; then
       fi
     fi
   else
-    if [[ -z $(ls $DIR | grep beluga-cli ) ]]; then
-      echo -e "\033[31;1maborted:\033[0m can't find beluga-cli executable"
+    if [[ ! -e "$DIR/beluga-cli" ]]; then
+      echo -e "can't find beluga-cli executable.\ndownloading new copy from GitHub [^z or ^c to abort]:"
+      curl -\# "https://raw.githubusercontent.com/entrez/beluga-cli/master/beluga-cli" -o "$DIR/beluga-cli"
+      eval "$(dirname "$0")/$(basename "$0")"
+      exit $?
     elif [[ ! -d "/usr/local/bin" ]]; then
       echo -e "\033[31;1mfailed:\033[0m problem finding /usr/local/bin, does it exist?"
     elif [[ ! $PATH =~ "/usr/local/bin" ]]; then
