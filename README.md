@@ -21,7 +21,7 @@ note that the "origin server location" should include the entire path used as th
 
 on the other hand, although you will be prompted for your belugacdn username and password if you choose to create a new token during the setup process, these are only used for generating the token and are not stored anywhere.
 
-if you would like to be able to run the utility by typing `beluga-cli` no matter your current location, you can add the directory which contains the file to your `$PATH` variable.
+if you would like to be able to run the utility by typing `beluga-cli` no matter your current location, you can run the included `installer.sh` script, or modify your `$PATH` variable to include the directory containing the beluga-cli executable.
 
 ## possible commands:
 
