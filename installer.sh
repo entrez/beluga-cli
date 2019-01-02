@@ -6,8 +6,8 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
 if [[ -e "/usr/local/bin/beluga-cli" && ! $SHLVL -gt 2 ]]; then
-  echo -e "a file named beluga-cli already exists in /usr/local/bin.\nare you sure you want to overwrite it?"
-  read -n1 -sp "overwrite? [y/N] " overwrite_response
+  echo -e "another file named beluga-cli already exists in /usr/local/bin."
+  read -n1 -sp "are you sure you want to overwrite it? [y/N] " overwrite_response
   while [[ $overwrite_response != "y" && $overwrite_response != "n" && $overwrite_response != "" ]]; do
     read -n1 -s overwrite_response
   done
@@ -53,4 +53,6 @@ if [[ $overwrite_response == "y" ]]; then
     fi
     exit 1
   fi
+else
+  echo "aborted."
 fi
