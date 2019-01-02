@@ -389,7 +389,7 @@ display_help_page ( ) {
   echo
   center_text "\033[1mnavigation/file discovery\033[0m"
   echo
-  echo -ne "     \033[1mftp\033[0m    "
+  echo -ne "    \033[1mftp\033[0m     "
   word_wrap $(expr $(tput cols) - 5) a-12 "log on to the origin server in an interactive ftp session."
   word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mftp\033[0m"
   echo
