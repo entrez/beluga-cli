@@ -10,6 +10,62 @@ versionnumber="v0.3.0"
 #  4 missing config
 #  5 partial failure
 
+update_self ( ) {
+  local msg="\033[1;92mchecking\033[0m for new version of beluga-cli"
+  word_wrap $(tput cols) 0 "$msg" >&2
+
+  local script_location="$(dirname "$0")/$(basename "$0")"
+  local item_head=$(curl -s -r 0-56 https://raw.githubusercontent.com/entrez/beluga-cli/master/beluga-cli)
+  local exit_code=$?
+
+  if [[ exit_code -ne 0 ]]; then
+    msg=$(validate_curl_result exit_code)
+  else
+    local new_version=""
+
+    local IFS=$'\n'
+    for line in $item_head; do
+      if [[ ${line:0:14} == "versionnumber=" ]]; then
+        new_version=${line:15:${#line}-16}
+        new_version=${new_version#'v'}
+        break
+      fi
+    done
+
+    if [[ new_version == "" ]]; then
+      msg="\033[31;1mfailed:\033[0m operation not completed [can't find version #]"
+      exit_code=1
+    else
+      local do_update=0
+      for n in $(seq 1 3); do
+        if [[ $(echo $new_version | cut -d'.' -f$n) > $(echo ${old_version:1} | cut -d'.' -f$n) ]]; then
+          do_update=1
+          break
+        elif [[ $(echo $new_version | cut -d'.' -f$n) < $(echo ${old_version:1} | cut -d'.' -f$n) ]]; then
+          do_update=0
+          break
+        fi
+      done
+
+      if [[ do_update -eq 1 ]]; then
+        msg="\033[1;92msuccess:\033[0m updating beluga-cli from version ${old_version:1} to version $new_version" >&2
+        word_wrap $(tput cols) 0 "$msg" >&2
+
+        curl -s https://raw.githubusercontent.com/entrez/beluga-cli/master/beluga-cli -o $script_location
+        exit_code=$?
+
+        msg=$(validate_curl_result $exit_code)
+      else
+        msg="\033[1;33mdone:\033[0m you already have the latest version of beluga-cli ($old_version)"
+        exit_code=0
+      fi
+    fi
+
+    word_wrap $(tput cols) 0 "$msg" >&2
+    exit $exit_code
+  fi
+}
+
 # beluga_api [ --token-id=<id> --token-secret=<secret> ] [ --user=<user> --password=<pass> ]
 # --request-method=<method> --request-path=<path> [ --request-body=<body> ]
 #
