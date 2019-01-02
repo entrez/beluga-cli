@@ -11,7 +11,7 @@ versionnumber="v0.3.0"
 #  5 partial failure
 
 update_self ( ) {
-  local msg="\033[1;92mchecking\033[0m for new version of beluga-cli"
+  local msg="checking for new version of beluga-cli"
   word_wrap $(tput cols) 0 "$msg" >&2
 
   local script_location="$(dirname "$0")/$(basename "$0")"
@@ -38,17 +38,17 @@ update_self ( ) {
     else
       local do_update=0
       for n in $(seq 1 3); do
-        if [[ $(echo $new_version | cut -d'.' -f$n) > $(echo ${old_version:1} | cut -d'.' -f$n) ]]; then
+        if [[ $(echo $new_version | cut -d'.' -f$n) > $(echo ${versionnumber:1} | cut -d'.' -f$n) ]]; then
           do_update=1
           break
-        elif [[ $(echo $new_version | cut -d'.' -f$n) < $(echo ${old_version:1} | cut -d'.' -f$n) ]]; then
+        elif [[ $(echo $new_version | cut -d'.' -f$n) < $(echo ${versionnumber:1} | cut -d'.' -f$n) ]]; then
           do_update=0
           break
         fi
       done
 
       if [[ do_update -eq 1 ]]; then
-        msg="\033[1;92msuccess:\033[0m updating beluga-cli from version ${old_version:1} to version $new_version" >&2
+        msg="\033[1;92msuccess:\033[0m updating beluga-cli from version ${versionnumber:1} to version $new_version" >&2
         word_wrap $(tput cols) 0 "$msg" >&2
 
         curl -s https://raw.githubusercontent.com/entrez/beluga-cli/master/beluga-cli -o $script_location
@@ -56,7 +56,7 @@ update_self ( ) {
 
         msg=$(validate_curl_result $exit_code)
       else
-        msg="\033[1;33mdone:\033[0m you already have the latest version of beluga-cli ($old_version)"
+        msg="\033[1;92mdone:\033[0m you already have the latest version of beluga-cli ($versionnumber)"
         exit_code=0
       fi
     fi
@@ -617,7 +617,7 @@ if [[ -e "$HOME/beluga-cli/.defaults" ]]; then
     fi
   fi
 fi
-if [[ $1 != "help" && $1 != "setup" ]]; then
+if [[ $1 != "help" && $1 != "setup" && $1 != "update" ]]; then
   if [[ ! -d "$HOME/beluga-cli" ]]; then
     word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1merror:\033[0m missing config directory ~/beluga-cli. run \033[1mbeluga-cli setup\033[0m to configure defaults, or \033[1mbeluga-cli \033[1mhelp\033[0m for more information." >&2
     exit 4
@@ -677,6 +677,9 @@ elif [[ $1 == "setup" ]]; then
   msghash=$(echo -ne "$msg" | openssl md5)
   echo -e "$msg\ncheck:$msghash" > $HOME/beluga-cli/.defaults
   exit 0
+elif [[ $1 == "update" ]]; then
+  update_self
+  exit $?
 fi
 
 inputflags=''
