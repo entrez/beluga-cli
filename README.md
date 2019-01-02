@@ -48,6 +48,14 @@ usage: `beluga-cli ll <cdn://uri>`
 **iv** : invalidate a file in the cdn's cache, so that another copy must be retrieved from the origin server.  
 usage: `beluga-cli iv [-s] <cdn://uri>`
 
+### internal tools:
+
+**update** : check whether the version of beluga-cli running is the latest available; if a newer version exists, update the local file.  
+usage: `beluga-cli update`
+
+**help** : get help about a command, or display the general help page (similar to this readme) if no command is specified.  
+usage: `beluga-cli [<command>] help`
+
 ## possible flags:
 
 **-i** : will invalidate the uri of any file modified by the requested operation. see [origin vs cdn](#origin-vs-cdn) for why this may be useful.
@@ -111,9 +119,6 @@ the following examples should help to demonstrate what normal input and output l
    ```
 
 ## tips & tricks:
-
-### help:
-you can include the word `help` after any command for a quick refresher about the use of that particular command, or by itself (`beluga-cli help`) to get a general help page like this one.
 
 ### setup:
 the "origin server location" in `beluga-cli setup` should include the entire path used as the origin on belugacdn. if you entered an additional path in your property's settings page on beluga, include it here. if you use beluga's origin solution, this may also include a directory with your property name (e.g. X.X.X.X/cdn.your.site/).
