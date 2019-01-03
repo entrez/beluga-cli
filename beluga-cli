@@ -604,6 +604,7 @@ recursive_delete ( ) {
 }
 
 if [[ -e "$HOME/beluga-cli/.defaults" && $1 != "setup" && $1 != "update" ]]; then
+  IFS=$'\n'
   defaults=( $(cat $HOME/beluga-cli/.defaults) )
   if [[ $(echo -ne "${defaults[0]}\n${defaults[1]}\n${defaults[2]}" | openssl md5) != $(echo ${defaults[3]} | cut -d':' -f2) ]]; then
     word_wrap $(expr $(tput cols) - 1) 1 "\033[31;1merror:\033[0m config file checksum invalid" >&2
