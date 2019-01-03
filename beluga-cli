@@ -1182,50 +1182,61 @@ elif [[ $primarycmd == 'mkdir' ]]; then
       msg="\033[31;1mfailed:\033[0m operation not completed [dir already exists]"
       word_wrap $(tput cols) 0 $msg >&2
     else
-      alreadyexists=''
-      tocreate=''
-
-      if [[ "${destination%\/*}" == $destination || $destination == $(expr "//$destination" : '.*/\(.*\)') ]]; then
-        tocreate=$destination
+      serverbase="${serverdefault%%\/*}"
+      if [[ $serverbase != $serverdefault ]]; then
+        curl "ftp://$serverbase/" -Q "SITE mkdir /${serverdefault#*\/}/$destination/" > /dev/null 2> /dev/null
+        result=$?
       else
-        if [[ $(curl "ftp://$serverdefault/${destination%%\/*}/" > /dev/null 2> /dev/null) -eq 0 ]]; then
-          alreadyexists+="${destination%%\/*}"
-          tocreate=${destination#*\/}
-
-          while [[ $tocreate != ${tocreate#*\/} ]]; do
-            curl "ftp://$serverdefault/$alreadyexists/${tocreate%%\/*}/" > /dev/null 2> /dev/null
-            result=$?
-
-            if [[ $result -eq 0 ]]; then
-              alreadyexists+="/${tocreate%%\/*}"
-              tocreate=${tocreate#*\/}
-            else
-              break
-            fi
-          done
-        else
-          tocreate=$destination
-        fi
+        curl "ftp://$serverbase/" -Q "SITE mkdir /$destination/" > /dev/null 2> /dev/null
+        result=$?
       fi
 
-      IFS='/'
-      for folder in $tocreate; do
-        curl "ftp://$serverdefault/$alreadyexists/" > /dev/null 2> /dev/null
-        result=$?
+      if [[ $result -ne 0 ]]; then
+        alreadyexists=''
+        tocreate=''
 
-        if [[ $result -eq 0 ]]; then
-          alreadyexists="$alreadyexists/$folder"
-          curl "ftp://$serverdefault/" -Q "-MKD $alreadyexists" > /dev/null 2> /dev/null
+        if [[ "${destination%\/*}" == $destination || $destination == $(expr "//$destination" : '.*/\(.*\)') ]]; then
+          tocreate=$destination
+        else
+          if [[ $(curl "ftp://$serverdefault/${destination%%\/*}/" > /dev/null 2> /dev/null) -eq 0 ]]; then
+            alreadyexists+="${destination%%\/*}"
+            tocreate="${destination#*\/}"
+
+            while [[ $tocreate != "${tocreate#*\/}" ]]; do
+              curl "ftp://$serverdefault/$alreadyexists/${tocreate%%\/*}/" > /dev/null 2> /dev/null
+              result=$?
+
+              if [[ $result -eq 0 ]]; then
+                alreadyexists+="/${tocreate%%\/*}"
+                tocreate=${tocreate#*\/}
+              else
+                break
+              fi
+            done
+          else
+            tocreate=$destination
+          fi
+        fi
+
+        IFS='/'
+        for folder in $tocreate; do
+          curl "ftp://$serverdefault/$alreadyexists/" > /dev/null 2> /dev/null
           result=$?
-          if [[ $result -ne 0 ]]; then
+
+          if [[ $result -eq 0 ]]; then
+            alreadyexists="$alreadyexists/$folder"
+            curl "ftp://$serverdefault/" -Q "-MKD $alreadyexists" > /dev/null 2> /dev/null
+            result=$?
+            if [[ $result -ne 0 ]]; then
+              display_message "\033[1;33mpartly failed:\033[0m created only http://$cdnurl/$alreadyexists/"
+              exit 5
+            fi
+          else
             display_message "\033[1;33mpartly failed:\033[0m created only http://$cdnurl/$alreadyexists/"
             exit 5
           fi
-        else
-          display_message "\033[1;33mpartly failed:\033[0m created only http://$cdnurl/$alreadyexists/"
-          exit 5
-        fi
-      done
+        done
+      fi
 
       word_wrap $(tput cols) 0 "\033[1;92mdone\033[0m" >&2
       exit 0
