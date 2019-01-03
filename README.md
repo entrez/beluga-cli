@@ -27,7 +27,7 @@ if you would like to be able to run the utility by typing `beluga-cli` no matter
 
 ### file manipulation:
 
-**cp** : copy a file to, from, or within the origin, resulting in duplicate copies at the origin and destination.  
+**cp** : copy a file to, from, or within the origin, resulting in duplicate copies at the source and destination.  
 usage: `beluga-cli cp [-is] <localpath> <cdn://uri> or <cdn://uri> <localpath> or <cdn://uri> <cdn://uri>`
 
 **mv** : move a file to, from, or within the server, deleting the original and keeping the new copy.  

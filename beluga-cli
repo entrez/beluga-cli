@@ -382,7 +382,7 @@ display_help_page ( ) {
   echo
   center_text "\033[1mfile manipulation\033[0m\n"
   echo -en "     \033[1mcp\033[0m     "
-  word_wrap $(expr $(tput cols) - 5) a-12 "copy a file to, from, or within the origin, resulting in duplicate copies at the origin and destination."
+  word_wrap $(expr $(tput cols) - 5) a-12 "copy a file to, from, or within the origin, resulting in duplicate copies at the source and destination."
   word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mcp \033[0m[\033[37m-is\033[0m] <\033[37mlocalpath\033[0m> <\033[37mcdn://uri\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mlocalpath\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mcdn://uri\033[0m>"
   echo
   echo -en "     \033[1mmv\033[0m     "
