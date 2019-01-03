@@ -36,7 +36,7 @@ usage: `beluga-cli mv [-is] <localpath> <cdn://uri> or <cdn://uri> <localpath> o
 **rm** : delete a remote file or directory.  
 usage: `beluga-cli rm [-irs] <cdn://uri>`
 
-**mkdir** : create a new directory on the origin server.
+**mkdir** : create a new directory on the origin server.  
 usage: `beluga-cli mkdir [-ps] <cdn://uri>`
 
 ### navigation & file discovery:
