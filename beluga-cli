@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # beluga-cli
-VERSION_NUMBER="v0.4.4"
+VERSION_NUMBER="v0.5.0"
 # exit codes:
 #  0 success
 #  1 failure: operation aborted
@@ -389,8 +389,13 @@ display_help_page ( ) {
   word_wrap $(expr $(tput cols) - 5) a-12 "move a file to, from, or within the server, so that the original copy is deleted and only the new one at the destination is kept."
   word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mmv \033[0m[\033[37m-is\033[0m] <\033[37mlocalpath\033[0m> <\033[37mcdn://uri\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mlocalpath\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mcdn://uri\033[0m>"
   echo
-  echo -e "     \033[1mrm\033[0m     delete a remote file or directory."
+  echo -en "     \033[1mrm\033[0m     "
+  word_wrap $(expr $(tput cols) - 5) a-12 "delete a remote file or directory."
   word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mrm \033[0m[\033[37m-irs\033[0m] <\033[37mcdn://uri\033[0m>"
+  echo
+  echo -en "   \033[1mmkdir\033[0m    "
+  word_wrap $(expr $(tput cols) - 5) a-12 "create a new directory on the origin server."
+  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mmkdir\033[0m \033[0m[\033[37m-s\033[0m] <\033[37mcdn://uri\033[0m>"
   echo
   echo
   center_text "\033[1mnavigation/file discovery\033[0m"
@@ -411,7 +416,6 @@ display_help_page ( ) {
   echo -en "     \033[1miv\033[0m     "
   word_wrap $(expr $(tput cols) - 5) a-12 "invalidate a file in the cdn's cache, so that another copy must be retrieved from the origin server."
   word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37miv\033[0m \033[0m[\033[37m-s\033[0m] <\033[37mcdn://uri\033[0m>"
-
   echo
   echo
   center_text "\033[1minternal tools\033[0m\n"
@@ -1171,28 +1175,60 @@ elif [[ $primarycmd == 'mkdir' ]]; then
       destination=${destination:0:$(expr ${#destination} - 1)}
     fi
 
-    if [[ "${destination%\/*}" == $destination || $destination == $(expr "//$destination" : '.*/\(.*\)') ]]; then
-      destinationpath=""
-      newdir=$destination
-    else
-      destinationpath="${destination%\/*}"
-      newdir=$(expr "//$destination" : '.*/\(.*\)')
-    fi
-
-    dircontents=$(curl "ftp://$serverdefault/$destination/" 2> /dev/null)
+    curl "ftp://$serverdefault/$destination/" > /dev/null 2> /dev/null
     result=$?
 
     if [[ $result -eq 0 ]]; then
       msg="\033[31;1mfailed:\033[0m operation not completed [dir already exists]"
       word_wrap $(tput cols) 0 $msg >&2
     else
-      curl "ftp://$serverdefault/" -Q "-MKD $destination" > /dev/null 2> /dev/null
-      result=$?
-      validationresult=$(validate_curl_result $?)
-      result=$?
+      alreadyexists=''
+      tocreate=''
 
-      word_wrap $(tput cols) 0 $validationresult >&2
-      exit $result
+      if [[ "${destination%\/*}" == $destination || $destination == $(expr "//$destination" : '.*/\(.*\)') ]]; then
+        tocreate=$destination
+      else
+        if [[ $(curl "ftp://$serverdefault/${destination%%\/*}/" > /dev/null 2> /dev/null) -eq 0 ]]; then
+          alreadyexists+="${destination%%\/*}"
+          tocreate=${destination#*\/}
+
+          while [[ $tocreate != ${tocreate#*\/} ]]; do
+            curl "ftp://$serverdefault/$alreadyexists/${tocreate%%\/*}/" > /dev/null 2> /dev/null
+            result=$?
+
+            if [[ $result -eq 0 ]]; then
+              alreadyexists+="/${tocreate%%\/*}"
+              tocreate=${tocreate#*\/}
+            else
+              break
+            fi
+          done
+        else
+          tocreate=$destination
+        fi
+      fi
+
+      IFS='/'
+      for folder in $tocreate; do
+        curl "ftp://$serverdefault/$alreadyexists/" > /dev/null 2> /dev/null
+        result=$?
+
+        if [[ $result -eq 0 ]]; then
+          alreadyexists="$alreadyexists/$folder"
+          curl "ftp://$serverdefault/" -Q "-MKD $alreadyexists" > /dev/null 2> /dev/null
+          result=$?
+          if [[ $result -ne 0 ]]; then
+            display_message "\033[1;33mpartly failed:\033[0m created only http://$cdnurl/$alreadyexists/"
+            exit 5
+          fi
+        else
+          display_message "\033[1;33mpartly failed:\033[0m created only http://$cdnurl/$alreadyexists/"
+          exit 5
+        fi
+      done
+
+      word_wrap $(tput cols) 0 "\033[1;92mdone\033[0m" >&2
+      exit 0
     fi
   fi
 elif [[ $primarycmd == 'iv' ]]; then
