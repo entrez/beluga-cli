@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # beluga-cli
-VERSION_NUMBER="v0.5.2"
+VERSION_NUMBER="v0.5.3"
 # exit codes:
 #  0 success
 #  1 failure: operation aborted
@@ -1222,7 +1222,6 @@ elif [[ $primarycmd == 'mkdir' ]]; then
 
         word_wrap $(tput cols) 0 $validationresult >&2
         exit $result
-        fi
       fi
     fi
   fi
