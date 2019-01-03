@@ -118,11 +118,17 @@ beluga_api ( ) {
 
   if [[ ( $requestmethod == 'POST' || $requestmethod == 'PUT' ) && ! -z $requestbody ]]; then
     bodyhash=$(echo -n $requestbody | openssl sha512)
+    if [[ ${bodyhash:0:9} == "(stdin)= " ]]; then
+      bodyhash=${bodyhash:9}
+    fi
     signstring="$signstring:$bodyhash"
   fi
 
   if [[ ! ( -z $tokenid || -z $tokensecret) ]]; then
     signhmac=$(echo -n "$signstring" | openssl sha512 -hmac "$tokensecret")
+    if [[ ${signhmac:0:9} == "(stdin)= " ]]; then
+      signhmac=${signhmac:9}
+    fi
     authheader="Token $tokenid $signhmac"
   elif [[ ! ( -z "$buser" || -z "$bpassword" ) ]]; then
     authheader="Basic $(echo -n "$buser:$bpassword" | openssl base64)"
