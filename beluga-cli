@@ -658,14 +658,17 @@ elif [[ $1 == "setup" ]]; then
   echo
   read -p " cdn url: " cdnurl </dev/tty
   echo
-  read -p " use an [e]xisting token for beluga authentication, or [g]enerate a new one? " tchoice </dev/tty
-  while [[ ! ( $(echo $tchoice | tr "[:upper:]" "[:lower:]") == 'g' || $(echo $tchoice | tr "[:upper:]" "[:lower:]") == 'e' ) ]]; do
-    echo -e " \033[31;1millegal input:\033[0m $tchoice"
-    read -p " use an [e]xisting token for beluga authentication, or [g]enerate a new one? " tchoice </dev/tty
+  read -n1 -sp " use an [e]xisting token for beluga authentication, or [G]enerate a new one? " tchoice </dev/tty
+  while [[ ! ( $(echo $tchoice | tr "[:upper:]" "[:lower:]") == 'g' || $(echo $tchoice | tr "[:upper:]" "[:lower:]") == 'e' || $tchoice == '' ) ]]; do
+    read -n1 -s tchoice </dev/tty
   done
   echo
 
-  if [[ $(echo $tchoice | tr "[:upper:]" "[:lower:]") == 'g' ]]; then
+  if [[ $(echo $tchoice | tr "[:upper:]" "[:lower:]") == 'e' ]]; then
+    read -p " token id: " id </dev/tty
+    read -p " token secret: " secret </dev/tty
+    echo
+  else
     read -p " belugacdn username: " busername </dev/tty
     read -sp " belugacdn password: " bpass </dev/tty
     echo -e "\n"
@@ -682,10 +685,6 @@ elif [[ $1 == "setup" ]]; then
       id=$(echo $resp | cut -d',' -f4 | tr -d '"' | cut -d':' -f2 | awk '{$1=$1};1')
       secret=$(echo $resp | cut -d',' -f1 | tr -d '"' | cut -d':' -f2 | awk '{$1=$1};1')
     fi
-  else
-    read -p " token id: " id </dev/tty
-    read -p " token secret: " secret </dev/tty
-    echo
   fi
 
   msg="$susername:$spass@$serverlocation"$'\n'"$id:$secret"$'\n'"$cdnurl"
