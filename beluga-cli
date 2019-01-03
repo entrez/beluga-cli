@@ -620,7 +620,9 @@ elif [[ $1 == "setup" ]]; then
   fi
   if [[ ! -e "$HOME/beluga-cli/.defaults" ]]; then
     touch "$HOME/beluga-cli/.defaults"
-    chmod +rw-x "$HOME/beluga-cli/.defaults"
+    if [[ ! ( -r "$HOME/beluga-cli/.defaults" && -w "$HOME/beluga-cli/.defaults" ) ]]; then
+      chmod +rw-x "$HOME/beluga-cli/.defaults" 2>/dev/null || (word_wrap $(tput cols) 0 "\033[31;1merror:\033[0m can't change read/write bits for $HOME/beluga-cli/.defaults"; exit 4)
+    fi
   fi
   echo
   word_wrap $(tput cols) 0 "\033[31;1mcaution:\033[0m your origin server username and password will be stored and transmitted as plain text, so ensure they are not used elsewhere." >&2
