@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # beluga-cli
-VERSION_NUMBER="v0.4.1"
+VERSION_NUMBER="v0.4.2"
 # exit codes:
 #  0 success
 #  1 failure: operation aborted
