@@ -335,7 +335,7 @@ word_wrap ( ) {
         max=$(expr $maxlength - $starttab)
       fi
 
-      if [[ $(echo "$currline $word" | sed "s,$(printf '\033')\\[[0-9;]*[a-zA-Z],,g" | awk '{print length}') -lt $max ]]; then
+      if [[ $(echo "$currline $word" | sed "s,$(echo -e '\033')\\[[0-9;]*[a-zA-Z],,g" | awk '{print length}') -lt $max ]]; then
         currline="$currline $word"
       else
         if [[ $linenum -gt $start ]]; then
