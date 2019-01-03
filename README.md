@@ -1,6 +1,6 @@
 # beluga-cli
 
-v0.4.4
+v0.5.0
 
 ## overview:
 
@@ -36,6 +36,9 @@ usage: `beluga-cli mv [-is] <localpath> <cdn://uri> or <cdn://uri> <localpath> o
 **rm** : delete a remote file or directory.  
 usage: `beluga-cli rm [-irs] <cdn://uri>`
 
+**mkdir** : create a new directory on the origin server.
+usage: `beluga-cli mkdir [-ps] <cdn://uri>`
+
 ### navigation & file discovery:
 
 **ftp** : log on to the origin server in an interactive ftp session.  
@@ -63,6 +66,8 @@ usage: `beluga-cli [<command>] help`
 ## possible flags:
 
 **-i** : will invalidate the uri of any file modified by the requested operation. see [origin vs cdn](#origin-vs-cdn) for why this may be useful.
+
+**-p** : create all intermediate directories in the specified path as needed.
 
 **-r** : delete all contents of the specified directory recursively.
 
