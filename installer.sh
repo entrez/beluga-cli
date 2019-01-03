@@ -3,20 +3,42 @@
 # this script will copy beluga-cli to /usr/local/bin so that it can be called
 # from the command line simply by typing "beluga-cli"
 
+echo "checking beluga-cli dependencies..."
+dependencies=(curl ftp openssl)
+
+sysname="$(uname -s)"
+
+for dependitem in ${dependencies[@]}; do
+  hash $dependitem 2> /dev/null
+  if [[ $? -ne 0 ]]; then
+    [[ "$sysname" == "Darwin" ]] && echo "❌ $dependitem" || echo "[NO] $dependitem"
+    read -n1 -sp "can't find $dependitem. continue anyway? [y/N] " userresponse
+    while [[ $userresponse != "y" && $userresponse != "n" && $userresponse != "" ]]; do
+      read -n1 -s userresponse
+    done
+    missingitems=("${missingitems[@]}" "$dependitem")
+    echo
+    if [[ $userresponse != "y" ]]; then echo "ok; quitting without installation."; exit 1; fi
+  else
+    [[ "$sysname" == "Darwin" ]] && echo "✅ $dependitem" || echo "[OK] $dependitem"
+  fi
+done
+
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
 if [[ -e "/usr/local/bin/beluga-cli" && ! $SHLVL -gt 2 ]]; then
-  echo -e "another file named beluga-cli already exists in /usr/local/bin."
-  read -n1 -sp "are you sure you want to overwrite it? [y/N] " overwrite_response
-  while [[ $overwrite_response != "y" && $overwrite_response != "n" && $overwrite_response != "" ]]; do
-    read -n1 -s overwrite_response
+  echo "another file named beluga-cli already exists in /usr/local/bin."
+  read -n1 -sp "are you sure you want to overwrite it? [y/N] " userresponse
+  while [[ $userresponse != "y" && $userresponse != "n" && $userresponse != "" ]]; do
+    read -n1 -s userresponse
   done
   echo
 else
-  overwrite_response="y"
+  userresponse="y"
 fi
 
-if [[ $overwrite_response == "y" ]]; then
+if [[ $userresponse == "y" ]]; then
+  echo "copying beluga-cli to /usr/local/bin..."
   if [[ -e "$DIR/beluga-cli" && -d "/usr/local/bin" && $PATH =~ "/usr/local/bin" ]]; then
     if [[ -x "$DIR/beluga-cli" ]]; then
       cp "$DIR/beluga-cli" /usr/local/bin/beluga-cli >&2
@@ -26,6 +48,13 @@ if [[ $overwrite_response == "y" ]]; then
         exit 1
       else
         echo -e "\033[92;1mdone.\033[0m"
+        if [[ ${#missingitems[@]} -gt 0 ]]; then
+          echo "before using beluga-cli, make sure to install the following:"
+          for itemname in ${missingitems[@]}; do
+            echo "$itemname"
+          done
+        fi
+
         exit 0
       fi
     else
@@ -54,5 +83,5 @@ if [[ $overwrite_response == "y" ]]; then
     exit 1
   fi
 else
-  echo "aborted."
+  echo "ok; quitting without installation."
 fi
