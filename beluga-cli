@@ -709,7 +709,7 @@ if [[ -z "$*" ]]; then
   word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [flags] [arguments]" >&2
   word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
   exit 3
-elif [[ $1 != 'rm' && $1 != 'cp' && $1 != 'mv' && $1 != 'iv' && $1 != 'ls' && $1 != 'll' && $1 != 'ftp' && $1 != 'help' ]]; then
+elif [[ $1 != 'rm' && $1 != 'cp' && $1 != 'mv' && $1 != 'iv' && $1 != 'ls' && $1 != 'll' && $1 != 'ftp' && $1 != 'help' && $1 != 'mkdir' ]]; then
   word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [flags] [arguments]" >&2
   word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
   word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m not a valid command: $1" >&2
@@ -718,7 +718,7 @@ else
   count=0
   args=( )
   for command in $@; do
-    if [[ $command == 'rm' || $command == 'cp' || $command == 'mv' || $command == 'iv' || $command == 'ls' || $command == 'll' || $command == 'ftp' ]]; then
+    if [[ $command == 'rm' || $command == 'cp' || $command == 'mv' || $command == 'iv' || $command == 'ls' || $command == 'll' || $command == 'ftp' || $command == 'mkdir' ]]; then
       let count+=1
     elif [[ ${command:0:1} == '-' ]]; then
       inputflags+=${command/-/}
@@ -1141,6 +1141,60 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
     fi
   fi
   exit $result
+elif [[ $primarycmd == 'mkdir' ]]; then
+  if [[ ${#inputflags} -gt 0 ]]; then
+    illegalflags=${inputflags//"s"}
+    if [[ ${#illegalflags} -gt 0 ]]; then
+      word_wrap $(tput cols) 1 "unexpected flags: -$illegalflags" >&2
+    fi
+  fi
+
+  if [[ ${args[0]} == 'help' || ${#args[@]} -gt 1 || ${#args[@]} -lt 1 || ${args[0]:0:6} != 'cdn://' ]]; then
+    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli $primarycmd [-s] <cdn://uri>" >&2
+    if [[ ${args[0]} == 'help' ]]; then
+      word_wrap $(tput cols) 0 "creates a new directory on the origin server." >&2
+      word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
+    elif [[ ${#args[@]} -lt 1 ]]; then
+      word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too few args" >&2
+    elif [[ ${#args[@]} -gt 1 ]]; then
+      word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too many args" >&2
+    elif [[ ${args[0]:0:6} != 'cdn://' ]]; then
+      word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes no cdn:// uri" >&2
+    fi
+    exit 3
+  else
+    destination="${args[0]:6}"
+
+    display_message "\033[1;92mcreating \033[1;92mdirectory:\033[0m http://$cdnurl/$destination" >&2
+
+    if [[ ${destination:$(expr ${#destination} - 1)} == "/" ]]; then
+      destination=${destination:0:$(expr ${#destination} - 1)}
+    fi
+
+    if [[ "${destination%\/*}" == $destination || $destination == $(expr "//$destination" : '.*/\(.*\)') ]]; then
+      destinationpath=""
+      newdir=$destination
+    else
+      destinationpath="${destination%\/*}"
+      newdir=$(expr "//$destination" : '.*/\(.*\)')
+    fi
+
+    dircontents=$(curl "ftp://$serverdefault/$destination/" 2> /dev/null)
+    result=$?
+
+    if [[ $result -eq 0 ]]; then
+      msg="\033[31;1mfailed:\033[0m operation not completed [dir already exists]"
+      word_wrap $(tput cols) 0 $msg >&2
+    else
+      curl "ftp://$serverdefault/" -Q "-MKD $destination" > /dev/null 2> /dev/null
+      result=$?
+      validationresult=$(validate_curl_result $?)
+      result=$?
+
+      word_wrap $(tput cols) 0 $validationresult >&2
+      exit $result
+    fi
+  fi
 elif [[ $primarycmd == 'iv' ]]; then
   if [[ $inputflags =~ 'i' || $inputflags =~ 'r' ]]; then
     if [[ $(echo $inputflags | tr -dc 'ir' | awk '{print length}') -gt 1 ]]; then
