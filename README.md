@@ -1,6 +1,6 @@
 # beluga-cli
 
-v0.5.0
+v0.5.1
 
 ## overview:
 
@@ -62,6 +62,9 @@ usage: `beluga-cli update`
 
 **help** : get help about a command, or display the general help page (similar to this readme) if no command is specified.  
 usage: `beluga-cli [<command>] help`
+
+**setup** : set up server/CDN credentials and other information; see the 'setup' section [below](#setup) for more details.  
+usage: `beluga-cli setup`
 
 ## possible flags:
 

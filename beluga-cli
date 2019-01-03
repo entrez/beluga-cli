@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # beluga-cli
-VERSION_NUMBER="v0.5.0"
+VERSION_NUMBER="v0.5.1"
 # exit codes:
 #  0 success
 #  1 failure: operation aborted
@@ -426,6 +426,10 @@ display_help_page ( ) {
   echo -en "    \033[1mhelp\033[0m    "
   word_wrap $(expr $(tput cols) - 5) a-12 "get help about a command, or display this page if no command is specified."
   word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[0m[<\033[37mcommand\033[0m>] \033[37mhelp\033[0m"
+  echo
+  echo -en "   \033[1msetup\033[0m    "
+  word_wrap $(expr $(tput cols) - 5) a-12 "set up server/CDN credentials and other information; see the 'setup' section below for more details."
+  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37msetup\033[0m"
   echo
   echo -e "\n \033[1;4mpossible flags\033[0;1m:\033[0m"
   echo
