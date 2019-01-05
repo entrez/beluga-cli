@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # beluga-cli
-VERSION_NUMBER="v0.5.4"
+VERSION_NUMBER="v0.5.5"
 # exit codes:
 #  0 success
 #  1 failure: operation aborted
@@ -372,9 +372,9 @@ word_wrap ( ) {
 display_help_page ( ) {
   echo
   echo
-  center_text "\033[1mextended help for beluga-cli $VERSION_NUMBER\033[0m"
+  center_text "\033[1mhelp for beluga-cli $VERSION_NUMBER\033[0m"
   echo
-  echo -e "\n \033[1;4musage\033[0;1m:\033[0m \033[37mbeluga-cli\033[0m <\033[37mcommand\033[0m> [\033[37mflags\033[0m] [\033[37marguments\033[0m]\n"
+  echo -e "\n \033[1;4musage\033[0;1m:\033[0m \033[37mbeluga-cli\033[0m <\033[37mcommand\033[0m> [<\033[37mflags\033[0m>] [<\033[37marguments\033[0m>]\n"
   echo -e " \033[1;4mdescription\033[0;1m:\033[0m"
   echo
   word_wrap $(expr $(tput cols) - 5) 5 "beluga-cli is a bash utility which uses \033[4mcurl(1)\033[0m - with the exception of the ftp command, which uses \033[4mftp(1)\033[0m - to efficiently manipulate files on an ftp origin server (like the one provided by beluga) and interact with the belugacdn api (\033[4mhttp://www.belugacdn.com/\033[0m). it can be used to quickly and easily accomplish, and/or as a step in the automation of, many tasks involving the management of objects which fit one or both these criteria."
@@ -461,7 +461,7 @@ display_help_page ( ) {
   echo
   word_wrap $(expr $(tput cols) - 5) 5 "on the other hand, although you will be prompted for your belugacdn username and password if you choose to create a new token during the setup process, these are only used for generating the token and are not stored anywhere."
   echo
-  echo -e " \033[1;4mother tips & tricks\033[0;1m:\033[0m"
+  echo -e " \033[1;4mnotes\033[0;1m:\033[0m"
   echo
   if [[ -z $cdnurl ]]; then
     word_wrap $(expr $(tput cols) - 5) 5 "\033[1mremote uri formatting:\033[0m note that in all commands, remote uris should be be formatted as cdn://path. for instance, in order to download the file http://cdn.your.site/dir1/file.txt, you could run the command \033[37mbeluga-cli \033[37mcp \033[37mcdn://dir1/file.txt \033[37m~/file.txt\033[0m. as a general rule, cdn://path/to/obj corresponds to http://cdn.your.site/path/to/obj."
@@ -675,11 +675,11 @@ fi
 inputflags=''
 
 if [[ -z "$*" ]]; then
-  word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [flags] [arguments]" >&2
+  word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>]" >&2
   word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
   exit 3
 elif [[ $1 != 'rm' && $1 != 'cp' && $1 != 'mv' && $1 != 'iv' && $1 != 'ls' && $1 != 'll' && $1 != 'ftp' && $1 != 'help' && $1 != 'mkdir' ]]; then
-  word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [flags] [arguments]" >&2
+  word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>]" >&2
   word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
   word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m not a valid command: $1" >&2
   exit 3
@@ -699,7 +699,7 @@ else
   legalflags="isrp"
 
   if [[ $inputflags != $(echo $inputflags | tr -dc $legalflags ) ]]; then
-    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [flags] [arguments]" >&2
+    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>]" >&2
     word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
     if [[ $(echo $inputflags | tr -d $legalflags | awk '{print length}') -gt 1 ]]; then
       word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m unexpected flags -$(echo $inputflags | tr -d $legalflags)"
@@ -708,17 +708,17 @@ else
     fi
     exit 3
   elif [[ $1 == 'help' && $count -gt 0 ]]; then
-    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [flags] [arguments]" >&2
+    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>]" >&2
     word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
     word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m use <command> help, not help <command>" >&2
     exit 3
   elif [[ $count -gt 1 ]]; then
-    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [flags] [arguments]" >&2
+    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>]" >&2
     word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
     word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes multiple commands" >&2
     exit 3
   elif [[ $count -eq 0 && $1 != 'help' ]]; then
-    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [flags] [arguments]" >&2
+    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>]" >&2
     word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
     word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes no commands" >&2
     exit 3

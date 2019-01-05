@@ -1,11 +1,11 @@
 # beluga-cli
 
-v0.5.4
+v0.5.5
 
 ## overview:
 
 ### usage:
-`beluga-cli <command> [flags] [arguments]`
+`beluga-cli <command> [<flags>] [<arguments>]`
 
 ### description:
 beluga-cli is a bash utility which uses [curl](https://curl.haxx.se/) - with the exception of the `ftp` command, which uses [ftp](https://www.gnu.org/software/inetutils/)\* - to efficiently manipulate files on an ftp origin server (like the one provided by beluga) and interact with the [belugacdn](http://www.belugacdn.com/) api.  it can be used to quickly and easily accomplish, and/or as a step in the automation of, many tasks involving the management of objects which fit one or both these criteria.
@@ -130,7 +130,7 @@ the following examples should help to demonstrate what normal input and output l
    done
    ```
 
-## other tips & tricks:
+## notes:
 
 ### remote uri formatting:
 note that in all commands, remote uris should be be formatted as cdn://path. for instance, in order to download the file http://cdn.your.site/dir1/file.txt, you could run the command `beluga-cli cp cdn://dir1/file.txt ~/file.txt`. as a general rule, cdn://path/to/obj corresponds to http://cdn.your.site/path/to/obj.
