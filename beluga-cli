@@ -1255,17 +1255,15 @@ elif [[ $primarycmd == 'iv' ]]; then
     invalidate $destinationpath
   fi
 elif [[ $primarycmd == 'ls' || $primarycmd == 'll' ]]; then
-  if [[ ${#inputflags} -gt 0 ]]; then
-    msg="unexpected flag: -$inputflags"
-    if [[ ${#inputflags} -gt 1 ]]; then
-      msg="unexpected flags: -$inputflags"
+  if [[ ! -z ${inputflags//s} ]]; then
+    invalidflags=${inputflags//s}
+    if [[ ${#invalidflags} -gt 1 ]]; then
+      msg="unexpected flags: -$invalidflags"
+    elif [[ ${#invalidflags} -gt 0 ]]; then
+      msg="unexpected flag: -$invalidflags"
     fi
 
-    if [[ $inputflags =~ 's' ]]; then
-      inputflags=${inputflags//s/}
-    fi
-
-    word_wrap $(tput cols) 1 "$msg" >&2
+    word_wrap $(tput cols) 0 "$msg" >&2
   fi
 
 
@@ -1310,7 +1308,7 @@ elif [[ $primarycmd == 'ls' || $primarycmd == 'll' ]]; then
   exitstatus=$?
 
   if [[ $exitstatus -eq 0 ]]; then
-    echo -e "\033[1;92msuccess\033[0m" >&2
+    if [[ ! $inputflags =~ 's' ]]; then echo -e "\033[1;92msuccess\033[0m" >&2; fi
     echo -e "$listing"
   else
     word_wrap $(tput cols) 0  "$validationresult" >&2
