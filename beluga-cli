@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # beluga-cli
-VERSION_NUMBER="v0.5.8"
+VERSION_NUMBER="v0.5.9"
 # exit codes:
 #  0 success
 #  1 failure: operation aborted
@@ -377,7 +377,7 @@ display_help_page ( ) {
   echo -e "\n \033[1;4musage\033[0;1m:\033[0m \033[37mbeluga-cli\033[0m <\033[37mcommand\033[0m> [<\033[37mflags\033[0m>] [<\033[37marguments\033[0m>]\n" #[\033[37m--profile=\033[0m<\033[37mprofilename\033[0m>]
   echo -e " \033[1;4mdescription\033[0;1m:\033[0m"
   echo
-  word_wrap $(expr $(tput cols) - 5) 5 "beluga-cli is a bash utility which uses \033[4mcurl(1)\033[0m - with the exception of the ftp command, which uses \033[4mftp(1)\033[0m - to efficiently manipulate files on an ftp origin server (like the one provided by beluga) and interact with the belugacdn api (\033[4mhttp://www.belugacdn.com/\033[0m). it can be used to quickly and easily accomplish, and/or as a step in the automation of, many tasks involving the management of objects which fit one or both these criteria."
+  word_wrap $(expr $(tput cols) - 5) 5 "beluga-cli is a bash utility which uses \033[4mcurl(1)\033[0m - with the exception of the ftp command, which uses \033[4mftp(1)\033[0m - to efficiently manipulate files on an ftp origin server (like the one provided by beluga) and interact with the belugacdn api (\033[4mhttp://www.belugacdn.com/\033[0m). it can be used to quickly and easily accomplish, and/or as a step in the automation of, many tasks involving the management of objects which fit one or both of these criteria."
   echo -e "\n \033[1;4mpossible commands\033[0;1m:\033[0m"
   echo
   center_text "\033[1mfile manipulation\033[0m\n"

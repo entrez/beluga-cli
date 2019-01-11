@@ -1,6 +1,6 @@
 # beluga-cli
 
-v0.5.8
+v0.5.9
 
 ## overview:
 
@@ -8,7 +8,7 @@ v0.5.8
 `beluga-cli <command> [<flags>] [<arguments>]`
 
 ### description:
-beluga-cli is a bash utility which uses [curl](https://curl.haxx.se/) - with the exception of the `ftp` command, which uses [ftp](https://www.gnu.org/software/inetutils/)\* - to efficiently manipulate files on an ftp origin server (like the one provided by beluga) and interact with the [belugacdn](http://www.belugacdn.com/) api.  it can be used to quickly and easily accomplish, and/or as a step in the automation of, many tasks involving the management of objects which fit one or both these criteria.
+beluga-cli is a bash utility which uses [curl](https://curl.haxx.se/) - with the exception of the `ftp` command, which uses [ftp](https://www.gnu.org/software/inetutils/)\* - to efficiently manipulate files on an ftp origin server (like the one provided by beluga) and interact with the [belugacdn](http://www.belugacdn.com/) api.  it can be used to quickly and easily accomplish, and/or as a step in the automation of, many tasks involving the management of objects which fit one or both of these criteria.
 
 \*if you are running mac os 10.13 or newer and do not have a command line ftp client installed but wish to use this command, you can install ftp by running the following [homebrew](https://brew.sh/) command: `brew install tnftp`.
 
