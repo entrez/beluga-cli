@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # beluga-cli
-VERSION_NUMBER="v0.6.0"
+VERSION_NUMBER="v0.6.1"
 # exit codes:
 #  0 success
 #  1 failure: operation aborted
@@ -601,7 +601,7 @@ else
   count=0
   args=( )
   for command in $@; do
-    if [[ $command == 'rm' || $command == 'cp' || $command == 'mv' || $command == 'iv' || $command == 'ls' || $command == 'll' || $command == 'ftp' || $command == 'mkdir' || $command == 'config' ]]; then
+    if [[ $command == 'rm' || $command == 'cp' || $command == 'mv' || $command == 'iv' || $command == 'ls' || $command == 'll' || $command == 'ftp' || $command == 'mkdir' || $command == 'config' || $command == 'update' ]]; then
       let count+=1
     elif [[ ${command:0:10} == "--profile=" ]]; then
       profilename=${command:10}
