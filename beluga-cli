@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # beluga-cli
-VERSION_NUMBER="v0.5.7"
+VERSION_NUMBER="v0.5.8"
 # exit codes:
 #  0 success
 #  1 failure: operation aborted
@@ -80,19 +80,19 @@ beluga_api ( ) {
 
   for item in "$@"; do
     if [[ ${item:0:11} == "--token-id=" ]]; then
-      tokenid=${item##*=}
+      local tokenid=${item##*=}
     elif [[ ${item:0:15} == "--token-secret=" ]]; then
-      tokensecret=${item##*=}
+      local tokensecret=${item##*=}
     elif [[ ${item:0:7} == "--user=" ]]; then
-      buser=${item##*=}
+      local buser=${item##*=}
     elif [[ ${item:0:11} == "--password=" ]]; then
-      bpassword=${item#--password=}
+      local bpassword=${item#--password=}
     elif [[ ${item:0:17} == "--request-method=" ]]; then
-      requestmethod=${item##*=}
+      local requestmethod=${item##*=}
     elif [[ ${item:0:15} == "--request-path=" ]]; then
-      requestpath=${item##*=}
+      local requestpath=${item##*=}
     elif [[ ${item:0:15} == "--request-body=" ]]; then
-      requestbody=${item##*=}
+      local requestbody=${item##*=}
     fi
   done
 
@@ -106,18 +106,18 @@ beluga_api ( ) {
   # requestpath='/api/cdn/v2/invalidations'
   # requestbody="{\"urls\":[{\"url\":\"$myurl\"}], \"limit-records\": \"50000\"}"
 
-  requesturlbase='https://api.belugacdn.com'
+  local requesturlbase='https://api.belugacdn.com'
 
-  isodate=$(gdate -u "+%Y-%m-%dT%H:%M:%S.%6NZ" 2> /dev/null)
+  local isodate=$(gdate -u "+%Y-%m-%dT%H:%M:%S.%6NZ" 2> /dev/null)
   if [[ $? -eq 127 ]]; then
     isodate=$(date -u "+%Y-%m-%dT%H:%M:%S.%6NZ")
   fi
 
   # TOKEN AUTHENTICATION (MUCH BETTER... BUT I CAN'T GET IT WORKING)
-  signstring="$requestmethod:$requestpath:$isodate"
+  local signstring="$requestmethod:$requestpath:$isodate"
 
   if [[ ( $requestmethod == 'POST' || $requestmethod == 'PUT' ) && ! -z $requestbody ]]; then
-    bodyhash=$(echo -n $requestbody | openssl sha512)
+    local bodyhash=$(echo -n $requestbody | openssl sha512)
     if [[ ${bodyhash:0:9} == "(stdin)= " ]]; then
       bodyhash=${bodyhash:9}
     fi
@@ -125,13 +125,13 @@ beluga_api ( ) {
   fi
 
   if [[ ! ( -z $tokenid || -z $tokensecret) ]]; then
-    signhmac=$(echo -n "$signstring" | openssl sha512 -hmac "$tokensecret")
+    local signhmac=$(echo -n "$signstring" | openssl sha512 -hmac "$tokensecret")
     if [[ ${signhmac:0:9} == "(stdin)= " ]]; then
       signhmac=${signhmac:9}
     fi
-    authheader="Token $tokenid $signhmac"
+    local authheader="Token $tokenid $signhmac"
   elif [[ ! ( -z "$buser" || -z "$bpassword" ) ]]; then
-    authheader="Basic $(echo -n "$buser:$bpassword" | openssl base64)"
+    local authheader="Basic $(echo -n "$buser:$bpassword" | openssl base64)"
   fi
   #echo $signstring
 
@@ -374,7 +374,7 @@ display_help_page ( ) {
   echo
   center_text "\033[1mhelp for beluga-cli $VERSION_NUMBER\033[0m"
   echo
-  echo -e "\n \033[1;4musage\033[0;1m:\033[0m \033[37mbeluga-cli\033[0m <\033[37mcommand\033[0m> [<\033[37mflags\033[0m>] [<\033[37marguments\033[0m>]\n"
+  echo -e "\n \033[1;4musage\033[0;1m:\033[0m \033[37mbeluga-cli\033[0m <\033[37mcommand\033[0m> [<\033[37mflags\033[0m>] [<\033[37marguments\033[0m>]\n" #[\033[37m--profile=\033[0m<\033[37mprofilename\033[0m>]
   echo -e " \033[1;4mdescription\033[0;1m:\033[0m"
   echo
   word_wrap $(expr $(tput cols) - 5) 5 "beluga-cli is a bash utility which uses \033[4mcurl(1)\033[0m - with the exception of the ftp command, which uses \033[4mftp(1)\033[0m - to efficiently manipulate files on an ftp origin server (like the one provided by beluga) and interact with the belugacdn api (\033[4mhttp://www.belugacdn.com/\033[0m). it can be used to quickly and easily accomplish, and/or as a step in the automation of, many tasks involving the management of objects which fit one or both these criteria."
@@ -488,7 +488,7 @@ invalidate ( ) {
   msg="\033[1;92minvalidating:\033[0m $myurl"
   display_message "$msg" >&2
 
-  resp=$(beluga_api --token-id=$defaulttokenid --token-secret=$defaulttokensecret --request-method=POST --request-path=/api/cdn/v2/invalidations --request-body="{\"urls\":[{\"url\":\"$myurl\"}], \"limit-records\": \"50000\"}")
+  resp=$(beluga_api --token-id=$tokenid --token-secret=$tokensecret --request-method=POST --request-path=/api/cdn/v2/invalidations --request-body="{\"urls\":[{\"url\":\"$myurl\"}], \"limit-records\": \"50000\"}")
   result=$?
 
   if [[ $resp =~ "password mismatch" ]]; then
@@ -576,52 +576,87 @@ recursive_delete ( ) {
   fi
 }
 
-if [[ -e "$HOME/beluga-cli/.defaults" && $1 != "config" && $1 != "update" ]]; then
-  IFS=$'\n'
-  defaults=( $(cat $HOME/beluga-cli/.defaults) )
-  if [[ $(echo -ne "${defaults[0]}\n${defaults[1]}\n${defaults[2]}" | openssl md5) != $(echo ${defaults[3]} | cut -d':' -f2) ]]; then
-    word_wrap $(tput cols) 0 "\033[31;1merror:\033[0m config file checksum invalid" >&2
-    word_wrap $(tput cols) 0 "run \033[1mbeluga-cli config\033[0m to set up a new defaults file, or \033[1mbeluga-cli \033[1mhelp\033[0m for more information." >&2
+if [[ -e "$HOME/.beluga-cli/credentials" && $1 != "config" && $1 != "update" ]]; then
+
+  #Credentials structure:
+  #[default]
+  #cdn_url=
+  #origin=
+  #origin_user=
+  #origin_pass=
+  #beluga_token_id=
+  #beluga_token_secret=
+
+  profilename="default"
+  IFS=$' \n'
+  credentialsf=( $(cat $HOME/.beluga-cli/credentials) )
+  for n in $(seq 0 $(expr ${#credentialsf[@]} - 1)); do
+    if [[ "${credentialsf[$n]}" == "[$profilename]" ]]; then
+      credentials=( "${credentialsf[@]:$n+1:6}" )
+      break
+    fi
+  done
+
+  for n in $(seq 0 $(expr ${#credentials[@]} - 1)); do
+    line="${credentials[$n]}"
+    if [[ "${line:0:8}" == "cdn_url=" ]]; then
+      cdnurl="${line:8}"
+    elif [[ "${line:0:7}" == "origin=" ]]; then
+      serverloc="${line:7}"
+    elif [[ "${line:0:12}" == "origin_user=" ]]; then
+      suser="${line:12}"
+    elif [[ "${line:0:12}" == "origin_pass=" ]]; then
+      spass="${line:12}"
+    elif [[ "${line:0:16}" == "beluga_token_id=" ]]; then
+      tokenid="${line:16}"
+    elif [[ "${line:0:20}" == "beluga_token_secret=" ]]; then
+      tokensecret="${line:20}"
+    fi
+  done
+
+  if [[ -z $cdnurl || -z $serverloc || -z $suser || -z $spass || -z $tokenid || -z $tokensecret ]]; then
+    word_wrap $(tput cols) 0 "\033[31;1merror:\033[0m bad credentials file" >&2
+    word_wrap $(tput cols) 0 "run \033[37mbeluga-cli \033[37mconfig\033[0m, or \033[37mbeluga-cli \033[37mhelp\033[0m for more info." >&2
     exit 4
-  else
-    serverdefault=${defaults[0]}
-    if [[ ${serverdefault:$(expr ${#serverdefault} - 1)} == '/' ]]; then
-      serverdefault=${serverdefault:0:$(expr ${#serverdefault} - 1)}
-    fi
-    if [[ ${serverdefault:0:6} == 'ftp://' ]]; then
-      serverdefault=${serverdefault:6}
-    fi
+  fi
 
-    defaulttokenid=$( echo ${defaults[1]} | cut -d':' -f1 )
-    defaulttokensecret=$( echo ${defaults[1]} | cut -d':' -f2 )
+  if [[ ${serverloc:$(expr ${#serverloc} - 1)} == '/' ]]; then
+    serverloc=${serverloc:0:$(expr ${#serverloc} - 1)}
+  fi
 
-    cdnurl=${defaults[2]}
-    if [[ ${cdnurl:$(expr ${#cdnurl} - 1)} == '/' ]]; then
-      cdnurl=${cdnurl:0:$(expr ${#cdnurl} - 1)}
-    fi
-    if [[ ${cdnurl:0:7} == 'http://' ]]; then
-      cdnurl=${cdnurl:7}
-    elif [[ ${cdnurl:0:8} == 'https://' ]]; then
-      cdnurl=${cdnurl:8}
-    fi
+  if [[ ${serverloc:0:6} == 'ftp://' ]]; then
+    serverloc=${serverloc:6}
+  fi
+
+  serverdefault="$suser:$spass@$serverloc"
+
+  if [[ ${cdnurl:$(expr ${#cdnurl} - 1)} == '/' ]]; then
+    cdnurl=${cdnurl:0:$(expr ${#cdnurl} - 1)}
+  fi
+
+  if [[ ${cdnurl:0:7} == 'http://' ]]; then
+    cdnurl=${cdnurl:7}
+  elif [[ ${cdnurl:0:8} == 'https://' ]]; then
+    cdnurl=${cdnurl:8}
   fi
 fi
+
 if [[ $1 != "help" && $1 != "config" && $1 != "update" ]]; then
-  if [[ ! -d "$HOME/beluga-cli" ]]; then
-    word_wrap $(tput cols) 0 "\033[31;1merror:\033[0m missing config directory ~/beluga-cli. run \033[1mbeluga-cli config\033[0m to configure defaults, or \033[1mbeluga-cli \033[1mhelp\033[0m for more information." >&2
+  if [[ ! -d "$HOME/.beluga-cli" ]]; then
+    word_wrap $(tput cols) 0 "\033[31;1merror:\033[0m missing config directory ~/.beluga-cli. run \033[1mbeluga-cli config\033[0m to configure defaults, or \033[1mbeluga-cli \033[1mhelp\033[0m for more information." >&2
     exit 4
-  elif [[ ! -e "$HOME/beluga-cli/.defaults" ]]; then
-    word_wrap $(tput cols) 0 "\033[31;1merror:\033[0m missing config file ~/beluga-cli/.defaults. run \033[1mbeluga-cli config\033[0m to configure defaults, or \033[1mbeluga-cli \033[1mhelp\033[0m for more information." >&2
+  elif [[ ! -e "$HOME/.beluga-cli/credentials" ]]; then
+    word_wrap $(tput cols) 0 "\033[31;1merror:\033[0m missing config file ~/.beluga-cli/credentials. run \033[1mbeluga-cli config\033[0m to configure defaults, or \033[1mbeluga-cli \033[1mhelp\033[0m for more information." >&2
     exit 4
   fi
 elif [[ $1 == "config" ]]; then
-  if [[ ! -d "$HOME/beluga-cli" ]]; then
-    mkdir "$HOME/beluga-cli"
+  if [[ ! -d "$HOME/.beluga-cli" ]]; then
+    mkdir "$HOME/.beluga-cli"
   fi
-  if [[ ! -e "$HOME/beluga-cli/.defaults" ]]; then
-    touch "$HOME/beluga-cli/.defaults"
-    if [[ ! ( -r "$HOME/beluga-cli/.defaults" && -w "$HOME/beluga-cli/.defaults" ) ]]; then
-      chmod +rw-x "$HOME/beluga-cli/.defaults" 2>/dev/null || (word_wrap $(tput cols) 0 "\033[31;1merror:\033[0m can't change read/write bits for $HOME/beluga-cli/.defaults"; exit 4)
+  if [[ ! -e "$HOME/.beluga-cli/credentials" ]]; then
+    touch "$HOME/.beluga-cli/credentials"
+    if [[ ! ( -r "$HOME/.beluga-cli/credentials" && -w "$HOME/.beluga-cli/credentials" ) ]]; then
+      chmod +rw-x "$HOME/.beluga-cli/credentials" 2>/dev/null || (word_wrap $(tput cols) 0 "\033[31;1merror:\033[0m can't change read/write bits for $HOME/.beluga-cli/credentials" >&2; exit 4)
     fi
   fi
   echo
@@ -648,12 +683,16 @@ elif [[ $1 == "config" ]]; then
     read -p " belugacdn username: " busername </dev/tty
     read -sp " belugacdn password: " bpass </dev/tty
     echo -e "\n"
-    echo " generating token..."
+    echo " generating token..." >&2
 
     resp=$(beluga_api --user="$busername" --password="$bpass" --request-method=POST --request-path=/api/token/token --request-body='{"description": "beluga-cli token"}')
+    exit_code=$?
 
     if [[ $resp =~ "password mismatch" ]]; then
       word_wrap $(tput cols) 0 "\033[31;1mfailed:\033[0m token not created [user/password incorrect]" >&2
+      exit 1
+    elif [[ $exit_code -ne 0 ]]; then
+      word_wrap $(tput cols) 0 "\033[31;1mfailed:\033[0m token not created [unknown error $exit_code]" >&2
       exit 1
     else
       echo -e " \033[1;92mdone\033[0m"
@@ -663,9 +702,8 @@ elif [[ $1 == "config" ]]; then
     fi
   fi
 
-  msg="$susername:$spass@$serverlocation"$'\n'"$id:$secret"$'\n'"$cdnurl"
-  msghash=$(echo -ne "$msg" | openssl md5)
-  echo -e "$msg\ncheck:$msghash" > $HOME/beluga-cli/.defaults
+  profilename="default"
+  echo -e "[$profilename]\ncdn_url=$cdnurl\norigin=$serverlocation\norigin_user=$susername\norigin_pass=$spass\nbeluga_token_id=$id\nbeluga_token_secret=$secret" > $HOME/.beluga-cli/credentials
   exit 0
 elif [[ $1 == "update" ]]; then
   update_self
@@ -867,20 +905,20 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
 
       if [[ $curroperation == 'mv' ]]; then
         msg="\033[1;92mmoving:\033[0m http://$cdnurl/$source -> http://$cdnurl/$destination"
-        curl "ftp://$serverdefault/$source" -Q "-DELE $sourcefile" > "$HOME/beluga-cli/.curltmp" 2> /dev/null
+        curl "ftp://$serverdefault/$source" -Q "-DELE $sourcefile" > "$HOME/.beluga-cli/.curltmp" 2> /dev/null
         result=$?
       elif [[ $curroperation == 'cp' ]]; then
         msg="\033[1;92mcopying:\033[0m http://$cdnurl/$source -> http://$cdnurl/$destination"
-        curl "ftp://$serverdefault/$source" > "$HOME/beluga-cli/.curltmp" 2> /dev/null
+        curl "ftp://$serverdefault/$source" > "$HOME/.beluga-cli/.curltmp" 2> /dev/null
         result=$?
       fi
 
       display_message "$msg" >&2
 
       if [[ $result -eq 0 ]]; then
-        curl -T "$HOME/beluga-cli/.curltmp" "ftp://$serverdefault/$destination" --ftp-create-dirs 2> /dev/null
+        curl -T "$HOME/.beluga-cli/.curltmp" "ftp://$serverdefault/$destination" --ftp-create-dirs 2> /dev/null
         result=$?
-        rm "$HOME/beluga-cli/.curltmp"
+        rm "$HOME/.beluga-cli/.curltmp"
       fi
 
       msg=$(validate_curl_result $result)
