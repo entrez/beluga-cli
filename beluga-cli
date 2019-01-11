@@ -374,7 +374,7 @@ display_help_page ( ) {
   echo
   center_text "\033[1mhelp for beluga-cli $VERSION_NUMBER\033[0m"
   echo
-  echo -e "\n \033[1;4musage\033[0;1m:\033[0m \033[37mbeluga-cli\033[0m <\033[37mcommand\033[0m> [<\033[37mflags\033[0m>] [<\033[37marguments\033[0m>]\n" #[\033[37m--profile=\033[0m<\033[37mprofilename\033[0m>]
+  echo -e "\n \033[1;4musage\033[0;1m:\033[0m \033[37mbeluga-cli\033[0m <\033[37mcommand\033[0m> [<\033[37mflags\033[0m>] [<\033[37marguments\033[0m>] [\033[37m--profile=\033[0m<\033[37mprofilename\033[0m>]\n"
   echo -e " \033[1;4mdescription\033[0;1m:\033[0m"
   echo
   word_wrap $(expr $(tput cols) - 5) 5 "beluga-cli is a bash utility which uses \033[4mcurl(1)\033[0m - with the exception of the ftp command, which uses \033[4mftp(1)\033[0m - to efficiently manipulate files on an ftp origin server (like the one provided by beluga) and interact with the belugacdn api (\033[4mhttp://www.belugacdn.com/\033[0m). it can be used to quickly and easily accomplish, and/or as a step in the automation of, many tasks involving the management of objects which fit one or both of these criteria."
@@ -463,6 +463,8 @@ display_help_page ( ) {
   echo
   echo -e " \033[1;4mnotes\033[0;1m:\033[0m"
   echo
+  word_wrap $(expr $(tput cols) - 5) 5 "\033[1mprofiles:\033[0m including \033[1m--profile=<profilename>\033[0m after the primary command allows you to switch between any number of named profiles. to set up a new profile, run \033[1mbeluga-cli \033[1mconfig \033[1m--profile=<profilename>\033[0m (with the name you want to use filled in). once you have set up the credentials for a particular profile, it can be used for any other command."
+  echo
   if [[ -z $cdnurl ]]; then
     word_wrap $(expr $(tput cols) - 5) 5 "\033[1mremote uri formatting:\033[0m note that in all commands, remote uris should be be formatted as cdn://path. for instance, in order to download the file http://cdn.your.site/dir1/file.txt, you could run the command \033[37mbeluga-cli \033[37mcp \033[37mcdn://dir1/file.txt \033[37m~/file.txt\033[0m. as a general rule, cdn://path/to/obj corresponds to http://cdn.your.site/path/to/obj."
   else
@@ -491,7 +493,10 @@ invalidate ( ) {
   resp=$(beluga_api --token-id=$tokenid --token-secret=$tokensecret --request-method=POST --request-path=/api/cdn/v2/invalidations --request-body="{\"urls\":[{\"url\":\"$myurl\"}], \"limit-records\": \"50000\"}")
   result=$?
 
-  if [[ $resp =~ "password mismatch" ]]; then
+  if [[ $resp =~ "TokenID is not numeric" ]]; then
+    validationresult="\033[31;1mfailed:\033[0m operation not completed [invalid token id]"
+    exitstatus=1
+  elif [[ $resp =~ "password mismatch" ]]; then
     validationresult="\033[31;1mfailed:\033[0m operation not completed [user/password incorrect]"
     exitstatus=1
   elif [[ $resp =~ "token lookup failed" ]]; then
@@ -499,6 +504,9 @@ invalidate ( ) {
     exitstatus=1
   elif [[ $resp =~ "token validation failed" ]]; then
     validationresult="\033[31;1mfailed:\033[0m operation not completed [token validation failed]"
+    exitstatus=1
+  elif [[ $resp =~ '"httpMessage":"Unauthorized"' ]]; then
+    validationresult="\033[31;1mfailed:\033[0m operation not completed [401 unauthorized]"
     exitstatus=1
   else
     curlstatus=$(echo $resp | cut -d',' -f3 | tr -d '"' | cut -d':' -f2)
@@ -579,12 +587,12 @@ recursive_delete ( ) {
 inputflags=''
 
 if [[ -z "$*" ]]; then
-  word_wrap $(tput cols) 1-7 "usage: beluga-cli <command> [<flags>] [<arguments>]" >&2 #[--profile=<profilename>]
+  word_wrap $(tput cols) 1-7 "usage: beluga-cli <command> [<flags>] [<arguments>] [--profile=<profilename>]" >&2
   word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
   word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
   exit 3
 elif [[ $1 != 'rm' && $1 != 'cp' && $1 != 'mv' && $1 != 'iv' && $1 != 'ls' && $1 != 'll' && $1 != 'ftp' && $1 != 'help' && $1 != 'mkdir' && $1 != 'config' && $1 != 'update' ]]; then
-  word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>]" >&2 #[--profile=<profilename>]
+  word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>] [--profile=<profilename>]" >&2
   word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
   word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
   word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m not a valid command: $1" >&2
@@ -611,7 +619,7 @@ else
   legalflags="isrp"
 
   if [[ $inputflags != $(echo $inputflags | tr -dc $legalflags ) ]]; then
-    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>]" >&2 #[--profile=<profilename>]
+    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>] [--profile=<profilename>]" >&2
       word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
     word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
     if [[ $(echo $inputflags | tr -d $legalflags | awk '{print length}') -gt 1 ]]; then
@@ -621,19 +629,19 @@ else
     fi
     exit 3
   elif [[ $1 == 'help' && $count -gt 0 ]]; then
-    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>]" >&2 #[--profile=<profilename>]
+    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>] [--profile=<profilename>]" >&2
     word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
     word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
     word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m use <command> help, not help <command>" >&2
     exit 3
   elif [[ $count -gt 1 ]]; then
-    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>]" >&2 #[--profile=<profilename>]
+    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>] [--profile=<profilename>]" >&2
     word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
     word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
     word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes multiple commands" >&2
     exit 3
   elif [[ $count -eq 0 && $1 != 'help' ]]; then
-    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>]" >&2 #[--profile=<profilename>]
+    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>] [--profile=<profilename>]" >&2
     word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
     word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
     word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes no commands" >&2
@@ -661,26 +669,33 @@ if [[ -e "$HOME/.beluga-cli/credentials" && $1 != "config" && $1 != "update" ]];
     fi
   done
 
-  for n in $(seq 0 $(expr ${#credentials[@]} - 1)); do
-    line="${credentials[$n]}"
-    if [[ "${line:0:8}" == "cdn_url=" ]]; then
-      cdnurl="${line:8}"
-    elif [[ "${line:0:7}" == "origin=" ]]; then
-      serverloc="${line:7}"
-    elif [[ "${line:0:12}" == "origin_user=" ]]; then
-      suser="${line:12}"
-    elif [[ "${line:0:12}" == "origin_pass=" ]]; then
-      spass="${line:12}"
-    elif [[ "${line:0:16}" == "beluga_token_id=" ]]; then
-      tokenid="${line:16}"
-    elif [[ "${line:0:20}" == "beluga_token_secret=" ]]; then
-      tokensecret="${line:20}"
-    fi
-  done
+  if [[ ${#credentials[@]} -gt 0 ]]; then
+    for n in $(seq 0 $(expr ${#credentials[@]} - 1)); do
+      line="${credentials[$n]}"
+      if [[ "${line:0:8}" == "cdn_url=" ]]; then
+        cdnurl="${line:8}"
+      elif [[ "${line:0:7}" == "origin=" ]]; then
+        serverloc="${line:7}"
+      elif [[ "${line:0:12}" == "origin_user=" ]]; then
+        suser="${line:12}"
+      elif [[ "${line:0:12}" == "origin_pass=" ]]; then
+        spass="${line:12}"
+      elif [[ "${line:0:16}" == "beluga_token_id=" ]]; then
+        tokenid="${line:16}"
+      elif [[ "${line:0:20}" == "beluga_token_secret=" ]]; then
+        tokensecret="${line:20}"
+      fi
+    done
+  fi
 
   if [[ -z $cdnurl || -z $serverloc || -z $suser || -z $spass || -z $tokenid || -z $tokensecret ]]; then
-    word_wrap $(tput cols) 0 "\033[31;1merror:\033[0m bad credentials [$profilename]" >&2
-    word_wrap $(tput cols) 0 "run \033[37;1mbeluga-cli \033[37;1mconfig\033[0m, or \033[37;1mbeluga-cli \033[37;1mhelp\033[0m for more info." >&2
+    if [[ $profilename == "default" ]]; then
+      word_wrap $(tput cols) 0 "\033[31;1merror:\033[0m bad credentials" >&2
+      word_wrap $(tput cols) 0 "run \033[37;1mbeluga-cli \033[37;1mconfig\033[0m, or \033[37;1mbeluga-cli \033[37;1mhelp\033[0m for more info." >&2
+    else
+      word_wrap $(tput cols) 0 "\033[31;1merror:\033[0m bad credentials [$profilename]" >&2
+      word_wrap $(tput cols) 0 "run \033[37;1mbeluga-cli \033[37;1mconfig \033[37;1m--profile=$profilename\033[0m, or \033[37;1mbeluga-cli \033[37;1mhelp\033[0m for more info." >&2
+    fi
     exit 4
   fi
 
