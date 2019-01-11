@@ -576,6 +576,71 @@ recursive_delete ( ) {
   fi
 }
 
+inputflags=''
+
+if [[ -z "$*" ]]; then
+  word_wrap $(tput cols) 1-7 "usage: beluga-cli <command> [<flags>] [<arguments>]" >&2 #[--profile=<profilename>]
+  word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
+  word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
+  exit 3
+elif [[ $1 != 'rm' && $1 != 'cp' && $1 != 'mv' && $1 != 'iv' && $1 != 'ls' && $1 != 'll' && $1 != 'ftp' && $1 != 'help' && $1 != 'mkdir' && $1 != 'config' && $1 != 'update' ]]; then
+  word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>]" >&2 #[--profile=<profilename>]
+  word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
+  word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
+  word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m not a valid command: $1" >&2
+  exit 3
+else
+  count=0
+  args=( )
+  for command in $@; do
+    if [[ $command == 'rm' || $command == 'cp' || $command == 'mv' || $command == 'iv' || $command == 'ls' || $command == 'll' || $command == 'ftp' || $command == 'mkdir' || $command == 'config' ]]; then
+      let count+=1
+    elif [[ ${command:0:10} == "--profile=" ]]; then
+      profilename=${command:10}
+    elif [[ ${command:0:1} == '-' ]]; then
+      inputflags+=${command/-/}
+    else
+      args=( ${args[@]} $command )
+    fi
+  done
+
+  if [[ -z "$profilename" ]]; then
+    profilename="default"
+  fi
+
+  legalflags="isrp"
+
+  if [[ $inputflags != $(echo $inputflags | tr -dc $legalflags ) ]]; then
+    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>]" >&2 #[--profile=<profilename>]
+      word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
+    word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
+    if [[ $(echo $inputflags | tr -d $legalflags | awk '{print length}') -gt 1 ]]; then
+      word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m unexpected flags -$(echo $inputflags | tr -d $legalflags)"
+    else
+      word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m unexpected flag -$(echo $inputflags | tr -d $legalflags)"
+    fi
+    exit 3
+  elif [[ $1 == 'help' && $count -gt 0 ]]; then
+    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>]" >&2 #[--profile=<profilename>]
+    word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
+    word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
+    word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m use <command> help, not help <command>" >&2
+    exit 3
+  elif [[ $count -gt 1 ]]; then
+    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>]" >&2 #[--profile=<profilename>]
+    word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
+    word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
+    word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes multiple commands" >&2
+    exit 3
+  elif [[ $count -eq 0 && $1 != 'help' ]]; then
+    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>]" >&2 #[--profile=<profilename>]
+    word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
+    word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
+    word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes no commands" >&2
+    exit 3
+  fi
+fi
+
 if [[ -e "$HOME/.beluga-cli/credentials" && $1 != "config" && $1 != "update" ]]; then
 
   #Credentials structure:
@@ -587,7 +652,6 @@ if [[ -e "$HOME/.beluga-cli/credentials" && $1 != "config" && $1 != "update" ]];
   #beluga_token_id=
   #beluga_token_secret=
 
-  profilename="default"
   IFS=$' \n'
   credentialsf=( $(cat $HOME/.beluga-cli/credentials) )
   for n in $(seq 0 $(expr ${#credentialsf[@]} - 1)); do
@@ -615,8 +679,8 @@ if [[ -e "$HOME/.beluga-cli/credentials" && $1 != "config" && $1 != "update" ]];
   done
 
   if [[ -z $cdnurl || -z $serverloc || -z $suser || -z $spass || -z $tokenid || -z $tokensecret ]]; then
-    word_wrap $(tput cols) 0 "\033[31;1merror:\033[0m bad credentials file" >&2
-    word_wrap $(tput cols) 0 "run \033[37mbeluga-cli \033[37mconfig\033[0m, or \033[37mbeluga-cli \033[37mhelp\033[0m for more info." >&2
+    word_wrap $(tput cols) 0 "\033[31;1merror:\033[0m bad credentials [$profilename]" >&2
+    word_wrap $(tput cols) 0 "run \033[37;1mbeluga-cli \033[37;1mconfig\033[0m, or \033[37;1mbeluga-cli \033[37;1mhelp\033[0m for more info." >&2
     exit 4
   fi
 
@@ -702,71 +766,30 @@ elif [[ $1 == "config" ]]; then
     fi
   fi
 
-  profilename="default"
-  echo -e "[$profilename]\ncdn_url=$cdnurl\norigin=$serverlocation\norigin_user=$susername\norigin_pass=$spass\nbeluga_token_id=$id\nbeluga_token_secret=$secret" > $HOME/.beluga-cli/credentials
+  IFS=$' \n'
+  credentialsf=( $(cat $HOME/.beluga-cli/credentials) )
+  for n in $(seq 0 $(expr ${#credentialsf[@]} - 1)); do
+    if [[ "${credentialsf[$n]}" == "[$profilename]" ]]; then
+      cn=$n
+      break
+    fi
+  done
+
+  if [[ -z $cn ]]; then
+    echo -e "[$profilename]\ncdn_url=$cdnurl\norigin=$serverlocation\norigin_user=$susername\norigin_pass=$spass\nbeluga_token_id=$id\nbeluga_token_secret=$secret" >> $HOME/.beluga-cli/credentials
+  else
+    sed -i'.old' "$(expr $cn + 2)s/.*/cdn_url=${cdnurl//\//\\\/}/" $HOME/.beluga-cli/credentials
+    sed -i'.old' "$(expr $cn + 3)s/.*/origin=${serverlocation//\//\\\/}/" $HOME/.beluga-cli/credentials
+    sed -i'.old' "$(expr $cn + 4)s/.*/origin_user=${susername//\//\\\/}/" $HOME/.beluga-cli/credentials
+    sed -i'.old' "$(expr $cn + 5)s/.*/origin_pass=${spass//\//\\\/}/" $HOME/.beluga-cli/credentials
+    sed -i'.old' "$(expr $cn + 6)s/.*/beluga_token_id=${id//\//\\\/}/" $HOME/.beluga-cli/credentials
+    sed -i'.old' "$(expr $cn + 7)s/.*/beluga_token_secret=${secret//\//\\\/}/" $HOME/.beluga-cli/credentials
+    rm $HOME/.beluga-cli/credentials.old
+  fi
   exit 0
 elif [[ $1 == "update" ]]; then
   update_self
   exit $?
-fi
-
-inputflags=''
-
-if [[ -z "$*" ]]; then
-  word_wrap $(tput cols) 1-7 "usage: beluga-cli <command> [<flags>] [<arguments>]" >&2 #[--profile=<profilename>]
-  word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
-  word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
-  exit 3
-elif [[ $1 != 'rm' && $1 != 'cp' && $1 != 'mv' && $1 != 'iv' && $1 != 'ls' && $1 != 'll' && $1 != 'ftp' && $1 != 'help' && $1 != 'mkdir' ]]; then
-  word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>]" >&2 #[--profile=<profilename>]
-  word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
-  word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
-  word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m not a valid command: $1" >&2
-  exit 3
-else
-  count=0
-  args=( )
-  for command in $@; do
-    if [[ $command == 'rm' || $command == 'cp' || $command == 'mv' || $command == 'iv' || $command == 'ls' || $command == 'll' || $command == 'ftp' || $command == 'mkdir' ]]; then
-      let count+=1
-    elif [[ ${command:0:1} == '-' ]]; then
-      inputflags+=${command/-/}
-    else
-      args=( ${args[@]} $command )
-    fi
-  done
-
-  legalflags="isrp"
-
-  if [[ $inputflags != $(echo $inputflags | tr -dc $legalflags ) ]]; then
-    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>]" >&2 #[--profile=<profilename>]
-      word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
-    word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
-    if [[ $(echo $inputflags | tr -d $legalflags | awk '{print length}') -gt 1 ]]; then
-      word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m unexpected flags -$(echo $inputflags | tr -d $legalflags)"
-    else
-      word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m unexpected flag -$(echo $inputflags | tr -d $legalflags)"
-    fi
-    exit 3
-  elif [[ $1 == 'help' && $count -gt 0 ]]; then
-    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>]" >&2 #[--profile=<profilename>]
-    word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
-    word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
-    word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m use <command> help, not help <command>" >&2
-    exit 3
-  elif [[ $count -gt 1 ]]; then
-    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>]" >&2 #[--profile=<profilename>]
-    word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
-    word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
-    word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes multiple commands" >&2
-    exit 3
-  elif [[ $count -eq 0 && $1 != 'help' ]]; then
-    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>]" >&2 #[--profile=<profilename>]
-    word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
-    word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
-    word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes no commands" >&2
-    exit 3
-  fi
 fi
 
 primarycmd=$1
