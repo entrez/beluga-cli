@@ -80,19 +80,19 @@ beluga_api ( ) {
 
   for item in "$@"; do
     if [[ ${item:0:11} == "--token-id=" ]]; then
-      tokenid=${item##*=}
+      local tokenid=${item##*=}
     elif [[ ${item:0:15} == "--token-secret=" ]]; then
-      tokensecret=${item##*=}
+      local tokensecret=${item##*=}
     elif [[ ${item:0:7} == "--user=" ]]; then
-      buser=${item##*=}
+      local buser=${item##*=}
     elif [[ ${item:0:11} == "--password=" ]]; then
-      bpassword=${item#--password=}
+      local bpassword=${item#--password=}
     elif [[ ${item:0:17} == "--request-method=" ]]; then
-      requestmethod=${item##*=}
+      local requestmethod=${item##*=}
     elif [[ ${item:0:15} == "--request-path=" ]]; then
-      requestpath=${item##*=}
+      local requestpath=${item##*=}
     elif [[ ${item:0:15} == "--request-body=" ]]; then
-      requestbody=${item##*=}
+      local requestbody=${item##*=}
     fi
   done
 
@@ -106,18 +106,18 @@ beluga_api ( ) {
   # requestpath='/api/cdn/v2/invalidations'
   # requestbody="{\"urls\":[{\"url\":\"$myurl\"}], \"limit-records\": \"50000\"}"
 
-  requesturlbase='https://api.belugacdn.com'
+  local requesturlbase='https://api.belugacdn.com'
 
-  isodate=$(gdate -u "+%Y-%m-%dT%H:%M:%S.%6NZ" 2> /dev/null)
+  local isodate=$(gdate -u "+%Y-%m-%dT%H:%M:%S.%6NZ" 2> /dev/null)
   if [[ $? -eq 127 ]]; then
     isodate=$(date -u "+%Y-%m-%dT%H:%M:%S.%6NZ")
   fi
 
   # TOKEN AUTHENTICATION (MUCH BETTER... BUT I CAN'T GET IT WORKING)
-  signstring="$requestmethod:$requestpath:$isodate"
+  local signstring="$requestmethod:$requestpath:$isodate"
 
   if [[ ( $requestmethod == 'POST' || $requestmethod == 'PUT' ) && ! -z $requestbody ]]; then
-    bodyhash=$(echo -n $requestbody | openssl sha512)
+    local bodyhash=$(echo -n $requestbody | openssl sha512)
     if [[ ${bodyhash:0:9} == "(stdin)= " ]]; then
       bodyhash=${bodyhash:9}
     fi
@@ -125,13 +125,13 @@ beluga_api ( ) {
   fi
 
   if [[ ! ( -z $tokenid || -z $tokensecret) ]]; then
-    signhmac=$(echo -n "$signstring" | openssl sha512 -hmac "$tokensecret")
+    local signhmac=$(echo -n "$signstring" | openssl sha512 -hmac "$tokensecret")
     if [[ ${signhmac:0:9} == "(stdin)= " ]]; then
       signhmac=${signhmac:9}
     fi
-    authheader="Token $tokenid $signhmac"
+    local authheader="Token $tokenid $signhmac"
   elif [[ ! ( -z "$buser" || -z "$bpassword" ) ]]; then
-    authheader="Basic $(echo -n "$buser:$bpassword" | openssl base64)"
+    local authheader="Basic $(echo -n "$buser:$bpassword" | openssl base64)"
   fi
   #echo $signstring
 
