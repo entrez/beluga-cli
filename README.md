@@ -1,6 +1,6 @@
 # beluga-cli
 
-v0.5.6
+v0.5.8
 
 ## overview:
 
