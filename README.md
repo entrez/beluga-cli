@@ -12,16 +12,16 @@ beluga-cli is a bash utility which uses [curl](https://curl.haxx.se/) - with the
 
 \*if you are running mac os 10.13 or newer and do not have a command line ftp client installed but wish to use this command, you can install ftp by running the following [homebrew](https://brew.sh/) command: `brew install tnftp`.
 
-### setup:
+### configuration:
 if you would like to be able to run the utility by typing `beluga-cli` no matter your current location, and are unfamiliar with modifying your system `$PATH` variable or would prefer a more automated solution, you can run the included `installer.sh` script, which can also verify the status of all `beluga-cli` dependencies and warn if any are missing from your computer, in addition to several other potentially useful features (including the verification of proper file permissions and the automatic download of a new copy of `beluga-cli` if an existing local file can't be found).
 
-in order to get everything working correctly before you start using beluga-cli, run the command `beluga-cli setup` to define the location and credentials used for your origin, the credentials used for belugacdn, and so on. you will be given the choice between using an existing token for authentication with the belugacdn api or generating a new one.
+in order to get everything working correctly before you start using beluga-cli, run the command `beluga-cli config` to define the location and credentials used for your origin, the credentials used for belugacdn, and so on. you will be given the choice between using an existing token for authentication with the belugacdn api or generating a new one.
 
 note that the "origin server location" should include the entire path used as the origin on belugacdn. if you entered an additional path in your property's settings page on beluga, include it here. if you use beluga's origin solution, this may also include a directory with your property name (e.g. X.X.X.X/cdn.your.site/).
 
 **caution:** your origin server username and password will be stored & transmitted as plain text, so ensure they are not used elsewhere.
 
-on the other hand, although you will be prompted for your belugacdn username and password if you choose to create a new token during the setup process, these are only used for generating the token and are not stored anywhere.
+on the other hand, although you will be prompted for your belugacdn username and password if you choose to create a new token during the setup & configuration process, these are only used for generating the token and are not stored anywhere.
 
 ## possible commands:
 
@@ -63,8 +63,8 @@ usage: `beluga-cli update`
 **help** : get help about a command, or display the general help page (similar to this readme) if no command is specified.  
 usage: `beluga-cli [<command>] help`
 
-**setup** : set up server/CDN credentials and other information; see the ['setup' section](#setup) for more details.  
-usage: `beluga-cli setup`
+**config** : set up server/CDN credentials and other information; see the ['configuration' section](#configuration) for more details.  
+usage: `beluga-cli config`
 
 ## possible flags:
 

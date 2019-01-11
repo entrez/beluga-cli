@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # beluga-cli
-VERSION_NUMBER="v0.5.6"
+VERSION_NUMBER="v0.5.7"
 # exit codes:
 #  0 success
 #  1 failure: operation aborted
@@ -427,9 +427,9 @@ display_help_page ( ) {
   word_wrap $(expr $(tput cols) - 5) a-12 "get help about a command, or display this page if no command is specified."
   word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[0m[<\033[37mcommand\033[0m>] \033[37mhelp\033[0m"
   echo
-  echo -en "   \033[1msetup\033[0m    "
-  word_wrap $(expr $(tput cols) - 5) a-12 "set up server/CDN credentials and other information; see the 'setup' section below for more details."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37msetup\033[0m"
+  echo -en "   \033[1mconfig\033[0m   "
+  word_wrap $(expr $(tput cols) - 5) a-12 "set up server/CDN credentials and other information; see the 'configuration' section below for more details."
+  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mconfig\033[0m"
   echo
   echo -e "\n \033[1;4mpossible flags\033[0;1m:\033[0m"
   echo
@@ -447,9 +447,9 @@ display_help_page ( ) {
   echo
   word_wrap $(expr $(tput cols) - 5) 5 "each flag can only be used on certain commands. if a flag is used on a command where it is not standard, beluga-cli will generally print an error message but then ignore the flag and continue."
   echo
-  echo -e " \033[1;4msetup\033[0;1m:\033[0m"
+  echo -e " \033[1;4mconfiguration\033[0;1m:\033[0m"
   echo
-  word_wrap $(expr $(tput cols) - 5) 5 "in order to get everything working correctly before you start using beluga-cli, you must run the command \033[37mbeluga-cli setup\033[0m to define the location and credentials used for your origin, the credentials used for belugacdn, and so on."
+  word_wrap $(expr $(tput cols) - 5) 5 "in order to get everything working correctly before you start using beluga-cli, you must run the command \033[37mbeluga-cli config\033[0m to define the location and credentials used for your origin, the credentials used for belugacdn, and so on."
   echo
   if [[ -z $cdnurl ]]; then
     word_wrap $(expr $(tput cols) - 5) 5 "note that the \"origin server location\" should include the entire path used as the origin on belugacdn. if you entered an additional path in your property's settings page on beluga, include it here. if you use beluga's origin solution, this may also include a directory with your property name (e.g. X.X.X.X/cdn.your.site/)"
@@ -459,7 +459,7 @@ display_help_page ( ) {
   echo
   word_wrap $(expr $(tput cols) - 5) 5 "\033[1mcaution:\033[0m your origin server username and password will be stored & transmitted as plain text, so ensure they are not used elsewhere."
   echo
-  word_wrap $(expr $(tput cols) - 5) 5 "on the other hand, although you will be prompted for your belugacdn username and password if you choose to create a new token during the setup process, these are only used for generating the token and are not stored anywhere."
+  word_wrap $(expr $(tput cols) - 5) 5 "on the other hand, although you will be prompted for your belugacdn username and password if you choose to create a new token during the setup & configuration process, these are only used for generating the token and are not stored anywhere."
   echo
   echo -e " \033[1;4mnotes\033[0;1m:\033[0m"
   echo
@@ -576,12 +576,12 @@ recursive_delete ( ) {
   fi
 }
 
-if [[ -e "$HOME/beluga-cli/.defaults" && $1 != "setup" && $1 != "update" ]]; then
+if [[ -e "$HOME/beluga-cli/.defaults" && $1 != "config" && $1 != "update" ]]; then
   IFS=$'\n'
   defaults=( $(cat $HOME/beluga-cli/.defaults) )
   if [[ $(echo -ne "${defaults[0]}\n${defaults[1]}\n${defaults[2]}" | openssl md5) != $(echo ${defaults[3]} | cut -d':' -f2) ]]; then
     word_wrap $(tput cols) 0 "\033[31;1merror:\033[0m config file checksum invalid" >&2
-    word_wrap $(tput cols) 0 "run \033[1mbeluga-cli setup\033[0m to set up a new defaults file, or \033[1mbeluga-cli \033[1mhelp\033[0m for more information." >&2
+    word_wrap $(tput cols) 0 "run \033[1mbeluga-cli config\033[0m to set up a new defaults file, or \033[1mbeluga-cli \033[1mhelp\033[0m for more information." >&2
     exit 4
   else
     serverdefault=${defaults[0]}
@@ -606,15 +606,15 @@ if [[ -e "$HOME/beluga-cli/.defaults" && $1 != "setup" && $1 != "update" ]]; the
     fi
   fi
 fi
-if [[ $1 != "help" && $1 != "setup" && $1 != "update" ]]; then
+if [[ $1 != "help" && $1 != "config" && $1 != "update" ]]; then
   if [[ ! -d "$HOME/beluga-cli" ]]; then
-    word_wrap $(tput cols) 0 "\033[31;1merror:\033[0m missing config directory ~/beluga-cli. run \033[1mbeluga-cli setup\033[0m to configure defaults, or \033[1mbeluga-cli \033[1mhelp\033[0m for more information." >&2
+    word_wrap $(tput cols) 0 "\033[31;1merror:\033[0m missing config directory ~/beluga-cli. run \033[1mbeluga-cli config\033[0m to configure defaults, or \033[1mbeluga-cli \033[1mhelp\033[0m for more information." >&2
     exit 4
   elif [[ ! -e "$HOME/beluga-cli/.defaults" ]]; then
-    word_wrap $(tput cols) 0 "\033[31;1merror:\033[0m missing config file ~/beluga-cli/.defaults. run \033[1mbeluga-cli setup\033[0m to configure defaults, or \033[1mbeluga-cli \033[1mhelp\033[0m for more information." >&2
+    word_wrap $(tput cols) 0 "\033[31;1merror:\033[0m missing config file ~/beluga-cli/.defaults. run \033[1mbeluga-cli config\033[0m to configure defaults, or \033[1mbeluga-cli \033[1mhelp\033[0m for more information." >&2
     exit 4
   fi
-elif [[ $1 == "setup" ]]; then
+elif [[ $1 == "config" ]]; then
   if [[ ! -d "$HOME/beluga-cli" ]]; then
     mkdir "$HOME/beluga-cli"
   fi
@@ -626,7 +626,7 @@ elif [[ $1 == "setup" ]]; then
   fi
   echo
   word_wrap $(tput cols) 0 "\033[31;1mcaution:\033[0m your origin server username and password will be stored and transmitted as plain text, so ensure they are not used elsewhere." >&2
-  word_wrap $(tput cols) 0 "run \033[1mbeluga-cli \033[1mhelp\033[0m and see the section 'setup' for more information on what to enter here." >&2
+  word_wrap $(tput cols) 0 "run \033[1mbeluga-cli \033[1mhelp\033[0m and see the section 'configuration' for more information on what to enter here." >&2
   echo
   read -p " origin server location: ftp://" serverlocation </dev/tty
   read -p " origin server username: " susername </dev/tty

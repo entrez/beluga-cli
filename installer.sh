@@ -153,7 +153,7 @@ if [[ $userresponse == "y" ]]; then
           done
           echo -n "also "
         fi
-        echo -e "make sure to run \033[37;1mbeluga-cli update\033[0m to ensure you have the most up-to-date version of the utility, and \033[37;1mbeluga-cli setup\033[0m to set up your credentials!"
+        echo -e "make sure to run \033[37;1mbeluga-cli update\033[0m to ensure you have the most up-to-date version of the utility, and \033[37;1mbeluga-cli config\033[0m to set up your credentials!"
 
         exit 0
       fi
