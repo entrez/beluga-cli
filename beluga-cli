@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # beluga-cli
-VERSION_NUMBER="v0.6.1"
+VERSION_NUMBER="v0.6.2"
 # exit codes:
 #  0 success
 #  1 failure: operation aborted
@@ -605,6 +605,12 @@ else
       let count+=1
     elif [[ ${command:0:10} == "--profile=" ]]; then
       profilename=${command:10}
+    elif [[ ${command:0:2} == '--' ]]; then
+      word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>] [--profile=<profilename>]" >&2
+      word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
+      word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
+      word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m unexpected flag $command"
+      exit 3
     elif [[ ${command:0:1} == '-' ]]; then
       inputflags+=${command/-/}
     else
@@ -620,7 +626,7 @@ else
 
   if [[ $inputflags != $(echo $inputflags | tr -dc $legalflags ) ]]; then
     word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>] [--profile=<profilename>]" >&2
-      word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
+    word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
     word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
     if [[ $(echo $inputflags | tr -d $legalflags | awk '{print length}') -gt 1 ]]; then
       word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m unexpected flags -$(echo $inputflags | tr -d $legalflags)"
@@ -742,27 +748,27 @@ elif [[ $1 == "config" ]]; then
   word_wrap $(tput cols) 0 "\033[31;1mcaution:\033[0m your origin server username and password will be stored and transmitted as plain text, so ensure they are not used elsewhere." >&2
   word_wrap $(tput cols) 0 "run \033[1mbeluga-cli \033[1mhelp\033[0m and see the section 'configuration' for more information on what to enter here." >&2
   echo
-  read -p " origin server location: ftp://" serverlocation </dev/tty
-  read -p " origin server username: " susername </dev/tty
-  read -p " origin server password: " spass </dev/tty
+  read -p "origin server location: ftp://" serverlocation </dev/tty
+  read -p "origin server username: " susername </dev/tty
+  read -p "origin server password: " spass </dev/tty
   echo
-  read -p " cdn url: " cdnurl </dev/tty
+  read -p "cdn url: " cdnurl </dev/tty
   echo
-  read -n1 -sp " use an [e]xisting token for beluga authentication, or [G]enerate a new one? " tchoice </dev/tty
+  read -n1 -sp "use an [e]xisting token for beluga authentication, or [G]enerate a new one? " tchoice </dev/tty
   while [[ ! ( $(echo $tchoice | tr "[:upper:]" "[:lower:]") == 'g' || $(echo $tchoice | tr "[:upper:]" "[:lower:]") == 'e' || $tchoice == '' ) ]]; do
     read -n1 -s tchoice </dev/tty
   done
   echo
 
   if [[ $(echo $tchoice | tr "[:upper:]" "[:lower:]") == 'e' ]]; then
-    read -p " token id: " id </dev/tty
-    read -p " token secret: " secret </dev/tty
+    read -p "token id: " id </dev/tty
+    read -p "token secret: " secret </dev/tty
     echo
   else
-    read -p " belugacdn username: " busername </dev/tty
-    read -sp " belugacdn password: " bpass </dev/tty
+    read -p "belugacdn username: " busername </dev/tty
+    read -sp "belugacdn password: " bpass </dev/tty
     echo -e "\n"
-    echo " generating token..." >&2
+    echo "generating token..." >&2
 
     resp=$(beluga_api --user="$busername" --password="$bpass" --request-method=POST --request-path=/api/token/token --request-body='{"description": "beluga-cli token"}')
     exit_code=$?
@@ -774,7 +780,7 @@ elif [[ $1 == "config" ]]; then
       word_wrap $(tput cols) 0 "\033[31;1mfailed:\033[0m token not created [unknown error $exit_code]" >&2
       exit 1
     else
-      echo -e " \033[1;92mdone\033[0m"
+      echo -e "\033[1;92mdone\033[0m"
       echo
       id=$(echo $resp | cut -d',' -f4 | tr -d '"' | cut -d':' -f2 | awk '{$1=$1};1')
       secret=$(echo $resp | cut -d',' -f1 | tr -d '"' | cut -d':' -f2 | awk '{$1=$1};1')
