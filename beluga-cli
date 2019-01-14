@@ -605,6 +605,12 @@ else
       let count+=1
     elif [[ ${command:0:10} == "--profile=" ]]; then
       profilename=${command:10}
+    elif [[ ${command:0:2} == '--' ]]; then
+      word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>] [--profile=<profilename>]" >&2
+      word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
+      word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
+      word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m unexpected flag $command"
+      exit 3
     elif [[ ${command:0:1} == '-' ]]; then
       inputflags+=${command/-/}
     else
