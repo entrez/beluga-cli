@@ -606,6 +606,7 @@ else
     elif [[ ${command:0:10} == "--profile=" ]]; then
       profilename=${command:10}
     elif [[ ${command:0:2} == '--' ]]; then
+      inputflags=${inputflags//s/}
       word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>] [--profile=<profilename>]" >&2
       word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
       word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
@@ -625,6 +626,7 @@ else
   legalflags="isrp"
 
   if [[ $inputflags != $(echo $inputflags | tr -dc $legalflags ) ]]; then
+    inputflags=${inputflags//s/}
     word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>] [--profile=<profilename>]" >&2
     word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
     word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
@@ -635,18 +637,21 @@ else
     fi
     exit 3
   elif [[ $1 == 'help' && $count -gt 0 ]]; then
+    inputflags=${inputflags//s/}
     word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>] [--profile=<profilename>]" >&2
     word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
     word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
     word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m use <command> help, not help <command>" >&2
     exit 3
   elif [[ $count -gt 1 ]]; then
+    inputflags=${inputflags//s/}
     word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>] [--profile=<profilename>]" >&2
     word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
     word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
     word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes multiple commands" >&2
     exit 3
   elif [[ $count -eq 0 && $1 != 'help' ]]; then
+    inputflags=${inputflags//s/}
     word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>] [--profile=<profilename>]" >&2
     word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
     word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
@@ -735,6 +740,7 @@ if [[ $1 != "help" && $1 != "config" && $1 != "update" ]]; then
     exit 4
   fi
 elif [[ $1 == "config" ]]; then
+  inputflags=${inputflags//s/}
   if [[ ! -d "$HOME/.beluga-cli" ]]; then
     mkdir "$HOME/.beluga-cli"
   fi
@@ -816,6 +822,7 @@ fi
 primarycmd=$1
 
 if [[ $primarycmd == 'help' ]]; then
+  inputflags=${inputflags//s/}
   display_help_page | less -R
   exit 0
 elif [[ $primarycmd == 'ftp' ]]; then
