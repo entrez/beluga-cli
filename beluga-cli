@@ -115,7 +115,7 @@ beluga_api ( ) {
     isodate=$(date -u "+%Y-%m-%dT%H:%M:%S.%6NZ")
   fi
 
-  # TOKEN AUTHENTICATION (MUCH BETTER... BUT I CAN'T GET IT WORKING)
+  # TOKEN AUTHENTICATION
   local signstring="$requestmethod:$requestpath:$isodate"
 
   if [[ ( $requestmethod == 'POST' || $requestmethod == 'PUT' ) && ! -z $requestbody ]]; then
@@ -169,6 +169,7 @@ display_message ( ) {
         if [[ `echo -e $line | sed "s,$(printf '\033')\\[[0-9;]*[a-zA-Z],,g" | awk '{print length}'` -gt $(tput cols) ]]; then
           if [[ $line =~ "http://$cdnurl" ]]; then
             line=${line//http:\/\/$cdnurl/cdn:/}
+            line=${line//%20/ }
           fi
         fi
 
