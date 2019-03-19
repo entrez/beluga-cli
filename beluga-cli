@@ -931,7 +931,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
 
   if [[ $mode == "rename" ]]; then
     if [[ -z $source ]]; then
-      msg="\033[31;1mfailed:\033[0m http://$cdnurl/ -> http://$cdnurl/$destination"$'\n'"is a directory: http://$cdnurl/"
+      msg="\033[31;1mfailed:\033[0m http://$cdnurl/ -> http://$cdnurl/${destination// /%20}"$'\n'"is a directory: http://$cdnurl/"
       display_message "$msg" >&2
       exit 1
     elif [[ ${source:$(expr ${#source} - 1)} == '/' ]]; then
@@ -942,7 +942,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
     result=$?
 
     if [[ $result -eq 0 ]]; then
-      msg="\033[31;1mfailed:\033[0m http://$cdnurl/$source/ -> http://$cdnurl/$destination"$'\n'"is a directory: http://$cdnurl/$source/"
+      msg="\033[31;1mfailed:\033[0m http://$cdnurl/${source// /%20}/ -> http://$cdnurl/${destination// /%20}"$'\n'"is a directory: http://$cdnurl/${source// /%20}/"
       display_message "$msg" >&2
       exit 1
     else
@@ -963,11 +963,11 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
       fi
 
       if [[ $curroperation == 'mv' ]]; then
-        msg="\033[1;92mmoving:\033[0m http://$cdnurl/$source -> http://$cdnurl/$destination"
+        msg="\033[1;92mmoving:\033[0m http://$cdnurl/${source// /%20} -> http://$cdnurl/${destination// /%20}"
         curl "ftp://$serverdefault/$source" -Q "-DELE $sourcefile" > "$HOME/.beluga-cli/.curltmp" 2> /dev/null
         result=$?
       elif [[ $curroperation == 'cp' ]]; then
-        msg="\033[1;92mcopying:\033[0m http://$cdnurl/$source -> http://$cdnurl/$destination"
+        msg="\033[1;92mcopying:\033[0m http://$cdnurl/${source// /%20} -> http://$cdnurl/${destination// /%20}"
         curl "ftp://$serverdefault/$source" > "$HOME/.beluga-cli/.curltmp" 2> /dev/null
         result=$?
       fi
@@ -1014,7 +1014,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
         remote+='/'
       fi
 
-      msg="\033[31;1mfailed:\033[0m $local -> http://$cdnurl/$remote"$'\n'"does not exist: $local"
+      msg="\033[31;1mfailed:\033[0m $local -> http://$cdnurl/${remote// /%20}"$'\n'"does not exist: $local"
       display_message "$msg" >&2
 
       exit 1
@@ -1028,7 +1028,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
         remote="$remote/"
       fi
 
-      msg="\033[31;1mfailed:\033[0m $local/ -> http://$cdnurl/$remote"$'\n'"is a directory: $local/"
+      msg="\033[31;1mfailed:\033[0m $local/ -> http://$cdnurl/${remote// /%20}"$'\n'"is a directory: $local/"
 
       display_message "$msg" >&2
       exit 1
@@ -1048,7 +1048,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
         if [[ $mode == "down" ]]; then
           if [[ $primarycmd == 'rm' ]]; then
             if [[ $inputflags =~ 'r' ]]; then
-              msg="\033[1;92mdeleting:\033[0m http://$cdnurl/$remote/"
+              msg="\033[1;92mdeleting:\033[0m http://$cdnurl/${remote// /%20}/"
               display_message "$msg"
 
               recursive_delete $remote
@@ -1059,10 +1059,10 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
               elif [[ $result -eq 5 ]]; then
                 msg="\033[1;33mpartly \033[1;33mfailed:\033[0m some files not deleted"
               else
-                msg="\033[31;1mfailed:\033[0m http://$cdnurl/$remote/ not deleted"
+                msg="\033[31;1mfailed:\033[0m http://$cdnurl/${remote// /%20}/ not deleted"
               fi
             elif [[ -z "$dircontents" ]]; then
-              msg="\033[1;92mdeleting:\033[0m http://$cdnurl/$remote/"
+              msg="\033[1;92mdeleting:\033[0m http://$cdnurl/${remote// /%20}/"
               display_message "$msg"
               curl -l "ftp://$serverdefault/" -Q "-RMD $remote" > /dev/null 2> /dev/null
               result=$?
@@ -1071,13 +1071,13 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
               word_wrap $(tput cols) 0  "$validationresult" >&2
               exit $result
             else
-              msg="\033[1;92mdeleting:\033[0m http://$cdnurl/$remote/"
+              msg="\033[1;92mdeleting:\033[0m http://$cdnurl/${remote// /%20}/"
               display_message "$msg" >&2
               msg="\033[31;1mfailed:\033[0m operation not completed [directory not empty]"
               result=1
             fi
           else
-            msg="\033[31;1mfailed:\033[0m http://$cdnurl/$remote/ -> $local"$'\n'"is a directory: http://$cdnurl/$remote/"
+            msg="\033[31;1mfailed:\033[0m http://$cdnurl/${remote// /%20}/ -> $local"$'\n'"is a directory: http://$cdnurl/${remote// /%20}/"
             result=1
           fi
 
@@ -1104,7 +1104,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
           if [[ $remoteendchar == '/' ]]; then
             # if the user included a / where there shouldn't be one,
             # tell them the verbatim file doesn't exist (even if it otherwise might)
-            msg="\033[31;1mfailed:\033[0m http://$cdnurl/$remote/ -> $local"$'\n'"does not exist: $remote/"
+            msg="\033[31;1mfailed:\033[0m http://$cdnurl/${remote// /%20}/ -> $local"$'\n'"does not exist: $remote/"
             display_message "$msg" >&2
             exit 1
           fi
@@ -1126,11 +1126,11 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
 
     if [[ $mode == "up" ]]; then
       if [[ $curroperation == "cp" ]]; then
-        msg="\033[1;92muploading:\033[0m $local -> http://$cdnurl/$remote"
+        msg="\033[1;92muploading:\033[0m $local -> http://$cdnurl/${remote// /%20}"
         curl -T "$local" "ftp://$serverdefault/$remote" --ftp-create-dirs 2> /dev/null
         result=$?
       elif [[ $curroperation == "mv" ]]; then
-        msg="\033[1;92mmoving:\033[0m $local -> http://$cdnurl/$remote"
+        msg="\033[1;92mmoving:\033[0m $local -> http://$cdnurl/${remote// /%20}"
         curl -T "$local" "ftp://$serverdefault/$remote" --ftp-create-dirs 2> /dev/null
         result=$?
         if [[ $result -eq 0 ]]; then
@@ -1178,14 +1178,14 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
       fi
 
       if [[ $curroperation == "cp" ]]; then
-        msg="\033[1;92mdownloading:\033[0m http://$cdnurl/$remote -> $local"
+        msg="\033[1;92mdownloading:\033[0m http://$cdnurl/${remote// /%20} -> $local"
         curl "ftp://$serverdefault/$remote" -o "$local" 2> /dev/null
         result=$?
       elif [[ $curroperation == "mv" ]]; then
         if [[ $primarycmd == 'rm' ]]; then
-          msg="\033[1;92mdeleting:\033[0m http://$cdnurl/$remote"
+          msg="\033[1;92mdeleting:\033[0m http://$cdnurl/${remote// /%20}"
         else
-          msg="\033[1;92mmoving:\033[0m http://$cdnurl/$remote -> $local"
+          msg="\033[1;92mmoving:\033[0m http://$cdnurl/${remote// /%20} -> $local"
         fi
         curl "ftp://$serverdefault/$remote" -Q "-DELE $remotefile" -o "$local" 2> /dev/null
         result=$?
@@ -1232,7 +1232,7 @@ elif [[ $primarycmd == 'mkdir' ]]; then
   else
     destination="${args[0]:6}"
 
-    display_message "\033[1;92mcreating \033[1;92mdirectory:\033[0m http://$cdnurl/$destination" >&2
+    display_message "\033[1;92mcreating \033[1;92mdirectory:\033[0m http://$cdnurl/${destination// /%20}" >&2
 
     if [[ ${destination:$(expr ${#destination} - 1)} == "/" ]]; then
       destination=${destination:0:$(expr ${#destination} - 1)}
@@ -1387,7 +1387,7 @@ elif [[ $primarycmd == 'ls' || $primarycmd == 'll' ]]; then
     remote+='/'
   fi
 
-  myurl=http://$cdnurl/$remote
+  myurl=http://$cdnurl/${remote// /%20}
 
   msg="\033[1;92mlisting contents of\033[0m $myurl"
 
