@@ -10,6 +10,8 @@ VERSION_NUMBER="v0.6.3"
 #  4 missing config
 #  5 partial failure
 
+#NB: consider possible utility of "${file##*/*}" and "${file%/*}" (https://en.wikipedia.org/wiki/Dirname) as well as basename (https://en.wikipedia.org/wiki/Basename)
+
 update_self ( ) {
   local msg="checking for new version of beluga-cli"
   word_wrap $(tput cols) 0 "$msg" >&2
@@ -600,7 +602,7 @@ elif [[ $1 != 'rm' && $1 != 'cp' && $1 != 'mv' && $1 != 'iv' && $1 != 'ls' && $1
 else
   count=0
   args=( )
-  for command in $@; do
+  for command in "$@"; do
     if [[ $command == 'rm' || $command == 'cp' || $command == 'mv' || $command == 'iv' || $command == 'ls' || $command == 'll' || $command == 'ftp' || $command == 'mkdir' || $command == 'config' || $command == 'update' ]]; then
       let count+=1
     elif [[ ${command:0:10} == "--profile=" ]]; then
@@ -615,7 +617,7 @@ else
     elif [[ ${command:0:1} == '-' ]]; then
       inputflags+=${command/-/}
     else
-      args=( ${args[@]} $command )
+      args=( "${args[@]}" "$command" )
     fi
   done
 
@@ -839,9 +841,9 @@ elif [[ $primarycmd == 'ftp' ]]; then
     word_wrap $(tput cols) 1 "$msg" >&2
   fi
 
-  if [[ ${args[0]} == 'help' || ${#args[@]} -gt 0 ]]; then
+  if [[ "${args[0]}" == 'help' || ${#args[@]} -gt 0 ]]; then
     word_wrap $(tput cols) 1:0-7 "usage: beluga-cli ftp" >&2
-    if [[ ${args[0]} == 'help' ]]; then
+    if [[ "${args[0]}" == 'help' ]]; then
       word_wrap $(tput cols) 0 "logs on to the origin server in an interactive ftp session." >&2
       word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
       exit 0
@@ -855,9 +857,9 @@ elif [[ $primarycmd == 'ftp' ]]; then
   exit $?
 elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; then
   if [[ $primarycmd == 'rm' ]]; then
-    if [[ ${args[0]} == 'help' || ${#args[@]} -gt 1 || ${#args[@]} -lt 1 || ${args[0]:0:6} != 'cdn://' ]]; then
+    if [[ "${args[0]}" == 'help' || ${#args[@]} -gt 1 || ${#args[@]} -lt 1 || "${args[0]:0:6}" != 'cdn://' ]]; then
       word_wrap $(tput cols) 1:0-7 "usage: beluga-cli rm [-isr] <cdn://uri>" >&2
-      if [[ ${args[0]} == 'help' ]]; then
+      if [[ "${args[0]}" == 'help' ]]; then
         word_wrap $(tput cols) 0 "deletes a file from the origin server." >&2
         word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
         exit 0
@@ -865,7 +867,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
         word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too few args" >&2
       elif [[ ${#args[@]} -gt 1 ]]; then
         word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too many args" >&2
-      elif [[ ${args[0]:0:6} != 'cdn://' ]]; then
+      elif [[ "${args[0]:0:6}" != 'cdn://' ]]; then
         word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes no cdn:// uri" >&2
       fi
       exit 3
@@ -881,9 +883,9 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
     fi
 
     curroperation=$primarycmd
-    if [[ ${args[0]} == 'help' || ${#args[@]} -gt 2 || ${#args[@]} -lt 2 || ( ${args[0]:0:6} != 'cdn://' && ${args[1]:0:6} != 'cdn://' ) ]]; then
+    if [[ "${args[0]}" == 'help' || ${#args[@]} -gt 2 || ${#args[@]} -lt 2 || ( "${args[0]:0:6}" != 'cdn://' && "${args[1]:0:6}" != 'cdn://' ) ]]; then
       word_wrap $(tput cols) 1:0-7 "usage: beluga-cli $primarycmd [-is] <localpath> <cdn://uri> or <cdn://uri> <localpath> or <cdn://uri> <cdn://uri>" >&2
-      if [[ ${args[0]} == 'help' ]]; then
+      if [[ "${args[0]}" == 'help' ]]; then
         if [[ $curroperation == 'mv' ]]; then
           word_wrap $(tput cols) 0 "moves a file to, from, or within the origin server: of the source and destination, one or both should be remote uris, formatted with cdn:// preceding the path." >&2
         else
@@ -893,7 +895,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
         exit 0
       elif [[ ${#args[@]} -lt 2 ]]; then
         word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too few args" >&2
-      elif [[ ( ${args[0]:0:6} != 'cdn://' && ${args[1]:0:6} != 'cdn://' ) ]]; then
+      elif [[ ( "${args[0]:0:6}" != 'cdn://' && "${args[1]:0:6}" != 'cdn://' ) ]]; then
         word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes no cdn:// uri" >&2
       elif [[ ${#args[@]} -gt 2 ]]; then
         word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too many args" >&2
@@ -902,7 +904,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
     fi
 
 
-    if [[ ${args[0]:0:6} == 'cdn://' && ${args[1]:0:6} == 'cdn://' ]]; then
+    if [[ "${args[0]:0:6}" == 'cdn://' && ${args[1]:0:6} == 'cdn://' ]]; then
       source=${args[0]#cdn:\/\/}
       destination=${args[1]#cdn:\/\/}
       mode="rename"
@@ -911,7 +913,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
         local=${args[0]}
         remote=${args[1]#cdn:\/\/}
         mode="up"
-      elif [[ ${args[0]:0:6} == 'cdn://' ]]; then
+      elif [[ "${args[0]:0:6}" == 'cdn://' ]]; then
         local=${args[1]}
         remote=${args[0]#cdn:\/\/}
         mode="down"
@@ -1214,16 +1216,16 @@ elif [[ $primarycmd == 'mkdir' ]]; then
     fi
   fi
 
-  if [[ ${args[0]} == 'help' || ${#args[@]} -gt 1 || ${#args[@]} -lt 1 || ${args[0]:0:6} != 'cdn://' ]]; then
+  if [[ "${args[0]}" == 'help' || ${#args[@]} -gt 1 || ${#args[@]} -lt 1 || "${args[0]:0:6}" != 'cdn://' ]]; then
     word_wrap $(tput cols) 1:0-7 "usage: beluga-cli $primarycmd [-s] <cdn://uri>" >&2
-    if [[ ${args[0]} == 'help' ]]; then
+    if [[ "${args[0]}" == 'help' ]]; then
       word_wrap $(tput cols) 0 "creates a new directory on the origin server." >&2
       word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
     elif [[ ${#args[@]} -lt 1 ]]; then
       word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too few args" >&2
     elif [[ ${#args[@]} -gt 1 ]]; then
       word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too many args" >&2
-    elif [[ ${args[0]:0:6} != 'cdn://' ]]; then
+    elif [[ "${args[0]:0:6}" != 'cdn://' ]]; then
       word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes no cdn:// uri" >&2
     fi
     exit 3
@@ -1331,16 +1333,16 @@ elif [[ $primarycmd == 'iv' ]]; then
     fi
   fi
 
-  if [[ ${args[0]} == 'help' || ${#args[@]} -gt 1 || ${#args[@]} -lt 1 || ${args[0]:0:6} != 'cdn://' ]]; then
+  if [[ "${args[0]}" == 'help' || ${#args[@]} -gt 1 || ${#args[@]} -lt 1 || "${args[0]:0:6}" != 'cdn://' ]]; then
     word_wrap $(tput cols) 1:0-7 "usage: beluga-cli $primarycmd [-s] <cdn://uri>" >&2
-    if [[ ${args[0]} == 'help' ]]; then
+    if [[ "${args[0]}" == 'help' ]]; then
       word_wrap $(tput cols) 0 "invalidates a file so it must be retrieved again from the origin server." >&2
       word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
     elif [[ ${#args[@]} -lt 1 ]]; then
       word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too few args" >&2
     elif [[ ${#args[@]} -gt 1 ]]; then
       word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too many args" >&2
-    elif [[ ${args[0]:0:6} != 'cdn://' ]]; then
+    elif [[ "${args[0]:0:6}" != 'cdn://' ]]; then
       word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes no cdn:// uri" >&2
     fi
     exit 3
@@ -1362,16 +1364,16 @@ elif [[ $primarycmd == 'ls' || $primarycmd == 'll' ]]; then
   fi
 
 
-  if [[ ${args[0]} == 'help' || ${#args[@]} -gt 1 || ${#args[@]} -lt 1 || ${args[0]:0:6} != 'cdn://' ]]; then
+  if [[ "${args[0]}" == 'help' || ${#args[@]} -gt 1 || ${#args[@]} -lt 1 || "${args[0]:0:6}" != 'cdn://' ]]; then
     word_wrap $(tput cols) 1:0-7 "usage: beluga-cli $primarycmd [-s] <cdn://uri>" >&2
-    if [[ ${args[0]} == 'help' ]]; then
+    if [[ "${args[0]}" == 'help' ]]; then
       word_wrap $(tput cols) 0 "retrieves and lists the contents of a specified directory on the origin." >&2
       word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
     elif [[ ${#args[@]} -lt 1 ]]; then
       word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too few args" >&2
     elif [[ ${#args[@]} -gt 1 ]]; then
       word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too many args" >&2
-    elif [[ ${args[0]:0:6} != 'cdn://' ]]; then
+    elif [[ "${args[0]:0:6}" != 'cdn://' ]]; then
       word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes no cdn:// uri" >&2
     fi
     exit 3
