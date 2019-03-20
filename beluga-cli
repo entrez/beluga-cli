@@ -208,7 +208,6 @@ display_message ( ) {
 # exit codes:
 #  0 success
 #  1 failure
-# todo: improve coverage of potential curl results
 validate_curl_result ( ) {
   local res=$1
 
@@ -626,7 +625,7 @@ else
     profilename="default"
   fi
 
-  legalflags="isrp"
+  legalflags="isrpc"
 
   if [[ $inputflags != $(echo $inputflags | tr -dc $legalflags ) ]]; then
     inputflags=${inputflags//s/}
@@ -927,6 +926,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
       local="$PWD/${local:2}"
     elif [[ ${local:0:1} == '~' ]]; then
       local=${local/\~/$HOME}
+      # TODO: is there a situation where this is really needed?
     fi
   fi
 
@@ -976,7 +976,11 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
       display_message "$msg" >&2
 
       if [[ $result -eq 0 ]]; then
-        curl -T "$HOME/.beluga-cli/.curltmp" "ftp://$serverdefault/$destination" --ftp-create-dirs 2> /dev/null
+        if [[ $inputflags =~ "p" ]]; then
+          curl -T "$HOME/.beluga-cli/.curltmp" "ftp://$serverdefault/$destination" --ftp-create-dirs 2> /dev/null
+        else
+          curl -T "$HOME/.beluga-cli/.curltmp" "ftp://$serverdefault/$destination" 2> /dev/null
+        fi
         result=$?
         rm "$HOME/.beluga-cli/.curltmp"
       fi
@@ -1128,11 +1132,19 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
     if [[ $mode == "up" ]]; then
       if [[ $curroperation == "cp" ]]; then
         msg="\033[1;92muploading:\033[0m $local -> http://$cdnurl/${remote// /%20}"
-        curl -T "$local" "ftp://$serverdefault/$remote" --ftp-create-dirs 2> /dev/null
+        if [[ $inputflags =~ "p" ]]; then
+          curl -T "$local" "ftp://$serverdefault/$remote" --ftp-create-dirs 2> /dev/null
+        else
+          curl -T "$local" "ftp://$serverdefault/$remote" 2> /dev/null
+        fi
         result=$?
       elif [[ $curroperation == "mv" ]]; then
         msg="\033[1;92mmoving:\033[0m $local -> http://$cdnurl/${remote// /%20}"
-        curl -T "$local" "ftp://$serverdefault/$remote" --ftp-create-dirs 2> /dev/null
+        if [[ $inputflags =~ "p" ]]; then
+          curl -T "$local" "ftp://$serverdefault/$remote" --ftp-create-dirs 2> /dev/null
+        else
+          curl -T "$local" "ftp://$serverdefault/$remote" 2> /dev/null
+        fi
         result=$?
         if [[ $result -eq 0 ]]; then
           rm $local
