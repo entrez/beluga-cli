@@ -10,8 +10,6 @@ VERSION_NUMBER="v0.6.4"
 #  4 missing config
 #  5 partial failure
 
-#NB: consider possible utility of "${file##*/*}" and "${file%/*}" (https://en.wikipedia.org/wiki/Dirname) as well as basename (https://en.wikipedia.org/wiki/Basename)
-
 update_self ( ) {
   local msg="checking for new version of beluga-cli"
   word_wrap $(tput cols) 0 "$msg" >&2
@@ -873,7 +871,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
       exit 3
     fi
 
-    remote=${args[0]#cdn:\/\/}
+    remote="${args[0]#cdn:\/\/}"
     curroperation='mv'
     local='/dev/null'
     mode="down"
@@ -921,12 +919,13 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
     fi
 
     if [[ $local == '.' ]]; then
-      local=$PWD
+      local="$PWD"
     elif [[ ${local:0:2} == './' ]]; then
       local="$PWD/${local:2}"
+    elif [[ ${local:0:3} == '../' ]]; then
+      local="$PWD"
     elif [[ ${local:0:1} == '~' ]]; then
-      local=${local/\~/$HOME}
-      # TODO: is there a situation where this is really needed?
+      local="${local/\~/$HOME}"
     fi
   fi
 
@@ -947,7 +946,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
       display_message "$msg" >&2
       exit 1
     else
-      sourcefile=$(expr "//$source" : '.*/\(.*\)')
+      sourcefile=${source##*/}
 
       if [[ ${destination:$(expr ${#destination} - 1)} == '/' ]]; then
         destination+=$sourcefile
@@ -1014,7 +1013,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
     fi
   else
     if [[ ! -e $local && $mode == "up" ]]; then
-      remotefile=$(expr "//$remote" : '.*/\(.*\)')
+      remotefile=${remote##*/}
       if [[ ! ( $remotefile =~ '.' || -z $remotefile ) ]]; then
         remote+='/'
       fi
@@ -1024,11 +1023,11 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
 
       exit 1
     elif [[ -d $local && $mode == "up" ]]; then
-      if [[ ${local:$(expr ${#local} - 1):1} == '/' ]]; then
+      if [[ ${local:(-1)} == '/' ]]; then
         local=${local:0:$(expr ${#local} - 1)}
       fi
 
-      remotefile=$(expr "//$remote" : '.*/\(.*\)')
+      remotefile=${remote##*/}
       if [[ ! ( $remotefile =~ '.' || -z $remotefile ) ]]; then
         remote="$remote/"
       fi
@@ -1090,15 +1089,15 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
 
           exit $result # and we are downloading (or deleting)
         elif [[ $mode == "up" ]]; then
-          remote+="/$(expr "//$local" : '.*/\(.*\)')"
+          remote+="/${local##*/}"
         fi
       else # if $remote is not a directory
         if [[ $mode == "up" ]]; then # if uploading
           if [[ $remoteendchar == '/' ]]; then # and the user ended the remote uri with a /
-            remote+="/$(expr "//$local" : '.*/\(.*\)')" # add the local filename to $remote
+            remote+="/${local##*/}" # add the local filename to $remote
           else # if the user didn't end it with a /
-            remotefile=$(expr "//$remote" : '.*/\(.*\)')
-            localfile=$(expr "//$local" : '.*/\(.*\)')
+            remotefile=${remote##*/}
+            localfile=${local##*/}
             if [[ ( ! $remotefile =~ '.' ) && $localfile =~ '.' ]]; then
               # if the local filename has an extension and the remote doesn't,
               # assume it was intended to be a directory
@@ -1117,7 +1116,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
       fi
     else
       if [[ $mode == "up" ]]; then
-        remote=$(expr "//$local" : '.*/\(.*\)')
+        remote=${local##*/}
       elif [[ $mode == "down" ]]; then
         if [[ $primarycmd == 'rm' ]]; then
           msg="\033[31;1mfailed:\033[0m deleting http://$cdnurl/"$'\n'"is a directory: http://$cdnurl/"
@@ -1152,16 +1151,15 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
         fi
       fi
     elif [[ $mode == "down" ]]; then
-      remotefile=$(expr "//$remote" : '.*/\(.*\)')
+      remotefile=${remote##*/}
 
-      if [[ ${local:$(expr ${#local} - 1):1} != '/' ]]; then # if the local path doesn't end with a /...
+      if [[ ${local:(-1)} != '/' ]]; then # if the local path doesn't end with a /...
         if [[ -d "$local" ]]; then
           # if $local refers to an existing directory nevertheless,
           # the filename should be the same as the remote filename
           local+="/$remotefile"
         elif [[ $local != '/dev/null' ]]; then
-          localfile=$(expr "//$local" : '.*/\(.*\)')
-          remotefile=$(expr "//$remote" : '.*/\(.*\)')
+          localfile=${local##*/}
 
           if [[ ( ! $localfile =~ '.' ) && $remotefile =~ '.' ]]; then
             # if the localfile has no extension but the remote
@@ -1179,15 +1177,15 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
             # the local filename should be the same as the remote
             local+="/$remotefile"
           else
-            if [[ ! ( "${local%\/*}" == $local || -d "${local%\/*}" ) ]]; then
+            if [[ ! ( "${local%/*}" == $local || -d "${local%/*}" ) ]]; then
               # if the local path without the filename doesn't exist, and the
               # path is not simply the filename (which is the case when downloading
               # into the current folder and referring to the destinations by
               # filename alone, create it.
               if [[ $inputflags =~ "p" ]]; then
-                mkdir -p "${local%\/*}"
+                mkdir -p "${local%/*}"
               else
-                msg="\033[31;1mfailed:\033[0m http://$cdnurl/${remote// /%20} -> $local"$'\n'"no such directory: ${local%\/*}"
+                msg="\033[31;1mfailed:\033[0m http://$cdnurl/${remote// /%20} -> $local"$'\n'"no such directory: ${local%/*}"
                 display_message "$msg" >&2
                 exit 1
               fi
@@ -1277,7 +1275,7 @@ elif [[ $primarycmd == 'mkdir' ]]; then
       word_wrap $(tput cols) 0 $msg >&2
     else
       if [[ $inputflags =~ "p" ]]; then
-        serverbase="${serverdefault%%\/*}"
+        serverbase="${serverdefault%%/*}"
         if [[ $serverbase != $serverdefault ]]; then
           curl "ftp://$serverbase/" -Q "SITE mkdir /${serverdefault#*\/}/$destination/" > /dev/null 2> /dev/null
           result=$?
@@ -1290,19 +1288,19 @@ elif [[ $primarycmd == 'mkdir' ]]; then
           alreadyexists=''
           tocreate=''
 
-          if [[ "${destination%\/*}" == $destination || $destination == $(expr "//$destination" : '.*/\(.*\)') ]]; then
+          if [[ "${destination%/*}" == $destination || $destination == ${destination##*/} ]]; then
             tocreate=$destination
           else
-            if [[ $(curl "ftp://$serverdefault/${destination%%\/*}/" > /dev/null 2> /dev/null) -eq 0 ]]; then
-              alreadyexists+="${destination%%\/*}"
+            if [[ $(curl "ftp://$serverdefault/${destination%%/*}/" > /dev/null 2> /dev/null) -eq 0 ]]; then
+              alreadyexists+="${destination%%/*}"
               tocreate="${destination#*\/}"
 
               while [[ $tocreate != "${tocreate#*\/}" ]]; do
-                curl "ftp://$serverdefault/$alreadyexists/${tocreate%%\/*}/" > /dev/null 2> /dev/null
+                curl "ftp://$serverdefault/$alreadyexists/${tocreate%%/*}/" > /dev/null 2> /dev/null
                 result=$?
 
                 if [[ $result -eq 0 ]]; then
-                  alreadyexists+="/${tocreate%%\/*}"
+                  alreadyexists+="/${tocreate%%/*}"
                   tocreate=${tocreate#*\/}
                 else
                   break
@@ -1412,7 +1410,7 @@ elif [[ $primarycmd == 'ls' || $primarycmd == 'll' ]]; then
 
   remote=${args[0]#cdn:\/\/}
 
-  endchar=${remote:$(expr ${#remote} - 1):1}
+  endchar=${remote:(-1)}
 
   if [[ $endchar != '/' && ! -z $remote ]]; then
     remote+='/'
