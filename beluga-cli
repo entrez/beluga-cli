@@ -1168,7 +1168,13 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
             # file does, assume it is meant to refer to a directory
             if [[ ! ( -d "$local" ) ]]; then
               # if the directory doesn't exist, create it
-              mkdir -p "$local"
+              if [[ $inputflags =~ "p" ]]; then
+                mkdir -p "$local"
+              else
+                msg="\033[31;1mfailed:\033[0m http://$cdnurl/${remote// /%20} -> $local"$'\n'"no such directory: $local"
+                display_message "$msg" >&2
+                exit 1
+              fi
             fi
             # the local filename should be the same as the remote
             local+="/$remotefile"
@@ -1178,13 +1184,25 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
               # path is not simply the filename (which is the case when downloading
               # into the current folder and referring to the destinations by
               # filename alone, create it.
-              mkdir -p "${local%\/*}"
+              if [[ $inputflags =~ "p" ]]; then
+                mkdir -p "${local%\/*}"
+              else
+                msg="\033[31;1mfailed:\033[0m http://$cdnurl/${remote// /%20} -> $local"$'\n'"no such directory: ${local%\/*}"
+                display_message "$msg" >&2
+                exit 1
+              fi
             fi
           fi
         fi
       else # if the local path does end with /
         if [[ ! -d "$local" ]]; then # create the directory if it didn't already exist
-          mkdir -p "$local"
+          if [[ $inputflags =~ "p" ]]; then
+            mkdir -p "$local"
+          else
+            msg="\033[31;1mfailed:\033[0m http://$cdnurl/${remote// /%20} -> $local"$'\n'"no such directory: $local"
+            display_message "$msg" >&2
+            exit 1
+          fi
         fi
 
         local+="$remotefile"
