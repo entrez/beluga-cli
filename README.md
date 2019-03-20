@@ -22,17 +22,17 @@ note that the "origin server location" should include the entire path used as th
 
 **caution:** your origin server username and password will be stored & transmitted as plain text, so ensure they are not used elsewhere.
 
-on the other hand, although you will be prompted for your belugacdn username and password if you choose to create a new token during the setup & configuration process, these are only used for generating the token and are not stored anywhere.
+on the other hand, although you will be prompted for your belugacdn username and password if you choose to create a new token during the setup & configuration process, these are only used once (for basic authentication, i.e. transmitted in base64) to generate the token, and are not stored anywhere.
 
 ## possible commands:
 
 ### file manipulation:
 
 **cp** : copy a file to, from, or within the origin, resulting in duplicate copies at the source and destination.  
-usage: `beluga-cli cp [-is] <localpath> <cdn://uri> or <cdn://uri> <localpath> or <cdn://uri> <cdn://uri>`
+usage: `beluga-cli cp [-ips] <localpath> <cdn://uri> or <cdn://uri> <localpath> or <cdn://uri> <cdn://uri>`
 
 **mv** : move a file to, from, or within the server, deleting the original and keeping the new copy.  
-usage: `beluga-cli mv [-is] <localpath> <cdn://uri> or <cdn://uri> <localpath> or <cdn://uri> <cdn://uri>`
+usage: `beluga-cli mv [-ips] <localpath> <cdn://uri> or <cdn://uri> <localpath> or <cdn://uri> <cdn://uri>`
 
 **rm** : delete a remote file or directory.  
 usage: `beluga-cli rm [-irs] <cdn://uri>`
@@ -71,7 +71,7 @@ usage: `beluga-cli config`
 
 **-i** : will invalidate the uri of any file modified by the requested operation. see [origin vs cdn](#origin-vs-cdn) for why this may be useful.
 
-**-p** : create all intermediate directories in the specified path as needed.
+**-p** : create all intermediate directories in the specified path (the destination path, when used with mv or cp commands) as needed.
 
 **-r** : delete all contents of the specified directory recursively.
 
@@ -117,10 +117,10 @@ the following examples should help to demonstrate what normal input and output l
    done
    ```
 
-4. use grep and xargs to download every image file (.png or .jp[e]g) in the dir from the previous example to a local directory named 'cdnimg', with 'cp_' prepended to each local filename:
+4. use grep and xargs to download every image file (.png or .jp[e]g) in the dir from the previous example to a local directory named 'cdnimg' - which is created in the process if it didn't previously exist - with 'cp_' prepended to each local filename:
 
    ```
-   $ beluga-cli ls cdn://images 2> /dev/null | grep -E "\.(jpe?g|png)" | xargs -I % beluga-cli cp cdn://images/% ~/cdnimg/cp_%
+   $ beluga-cli ls cdn://images 2> /dev/null | grep -E "\.(jpe?g|png)" | xargs -I % beluga-cli cp -p cdn://images/% ~/cdnimg/cp_%
    downloading: cdn://images/babypic.jpg -> ~/cdnimg/cp_babypic.jpg
    done
    downloading: cdn://images/logo.png -> ~/cdnimg/cp_logo.png

@@ -383,11 +383,11 @@ display_help_page ( ) {
   center_text "\033[1mfile manipulation\033[0m\n"
   echo -en "     \033[1mcp\033[0m     "
   word_wrap $(expr $(tput cols) - 5) a-12 "copy a file to, from, or within the origin, resulting in duplicate copies at the source and destination."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mcp \033[0m[\033[37m-is\033[0m] <\033[37mlocalpath\033[0m> <\033[37mcdn://uri\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mlocalpath\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mcdn://uri\033[0m>"
+  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mcp \033[0m[\033[37m-ips\033[0m] <\033[37mlocalpath\033[0m> <\033[37mcdn://uri\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mlocalpath\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mcdn://uri\033[0m>"
   echo
   echo -en "     \033[1mmv\033[0m     "
   word_wrap $(expr $(tput cols) - 5) a-12 "move a file to, from, or within the server, so that the original copy is deleted and only the new one at the destination is kept."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mmv \033[0m[\033[37m-is\033[0m] <\033[37mlocalpath\033[0m> <\033[37mcdn://uri\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mlocalpath\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mcdn://uri\033[0m>"
+  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mmv \033[0m[\033[37m-ips\033[0m] <\033[37mlocalpath\033[0m> <\033[37mcdn://uri\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mlocalpath\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mcdn://uri\033[0m>"
   echo
   echo -en "     \033[1mrm\033[0m     "
   word_wrap $(expr $(tput cols) - 5) a-12 "delete a remote file or directory."
@@ -428,7 +428,7 @@ display_help_page ( ) {
   word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[0m[<\033[37mcommand\033[0m>] \033[37mhelp\033[0m"
   echo
   echo -en "   \033[1mconfig\033[0m   "
-  word_wrap $(expr $(tput cols) - 5) a-12 "set up server/CDN credentials and other information; see the 'configuration' section below for more details."
+  word_wrap $(expr $(tput cols) - 5) a-12 "set up server/cdn credentials and other information; see the \`\`configuration'' section below for more details."
   word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mconfig\033[0m"
   echo
   echo -e "\n \033[1;4mpossible flags\033[0;1m:\033[0m"
@@ -437,7 +437,7 @@ display_help_page ( ) {
   word_wrap $(expr $(tput cols) - 5) a-12 "if a remote file may be modified by the specified command, beluga-cli will request invalidation of that uri after the operation is complete."
   echo
   echo -en "     \033[1m-p\033[0m     "
-  word_wrap $(expr $(tput cols) - 5) a-12 "create all intermediate directories in the specified path as needed."
+  word_wrap $(expr $(tput cols) - 5) a-12 "create all intermediate directories in the specified path (the destination path, when used with mv or cp commands) as needed."
   echo
   echo -en "     \033[1m-r\033[0m     "
   word_wrap $(expr $(tput cols) - 5) a-12 "delete all contents of the specified directory recursively."
@@ -452,14 +452,14 @@ display_help_page ( ) {
   word_wrap $(expr $(tput cols) - 5) 5 "in order to get everything working correctly before you start using beluga-cli, you must run the command \033[37mbeluga-cli config\033[0m to define the location and credentials used for your origin, the credentials used for belugacdn, and so on."
   echo
   if [[ -z $cdnurl ]]; then
-    word_wrap $(expr $(tput cols) - 5) 5 "note that the \"origin server location\" should include the entire path used as the origin on belugacdn. if you entered an additional path in your property's settings page on beluga, include it here. if you use beluga's origin solution, this may also include a directory with your property name (e.g. X.X.X.X/cdn.your.site/)"
+    word_wrap $(expr $(tput cols) - 5) 5 "note that the \`\`origin server location'' should include the entire path used as the origin on belugacdn. if you entered an additional path in your property's settings page on beluga, include it here. if you use beluga's origin solution, this may also include a directory with your property name (e.g. X.X.X.X/cdn.your.site/)"
   else
-    word_wrap $(expr $(tput cols) - 5) 5 "note that the \"origin server location\" should include the entire path used as the origin on belugacdn. if you entered an additional path in your property's settings page on beluga, include it here. if you use beluga's origin solution, this may also include a directory with your property name (e.g. X.X.X.X/$cdnurl/)"
+    word_wrap $(expr $(tput cols) - 5) 5 "note that the \`\`origin server location'' should include the entire path used as the origin on belugacdn. if you entered an additional path in your property's settings page on beluga, include it here. if you use beluga's origin solution, this may also include a directory with your property name (e.g. X.X.X.X/$cdnurl/)"
   fi
   echo
   word_wrap $(expr $(tput cols) - 5) 5 "\033[1mcaution:\033[0m your origin server username and password will be stored & transmitted as plain text, so ensure they are not used elsewhere."
   echo
-  word_wrap $(expr $(tput cols) - 5) 5 "on the other hand, although you will be prompted for your belugacdn username and password if you choose to create a new token during the setup & configuration process, these are only used for generating the token and are not stored anywhere."
+  word_wrap $(expr $(tput cols) - 5) 5 "on the other hand, although you will be prompted for your belugacdn username and password if you choose to create a new token during the setup & configuration process, these are only used once (for basic authentication, i.e. transmitted in base64) to generate the token, and are not stored anywhere."
   echo
   echo -e " \033[1;4mnotes\033[0;1m:\033[0m"
   echo
