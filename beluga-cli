@@ -133,7 +133,6 @@ beluga_api ( ) {
   elif [[ ! ( -z "$buser" || -z "$bpassword" ) ]]; then
     local authheader="Basic $(echo -n "$buser:$bpassword" | openssl base64)"
   fi
-  #echo $signstring
 
   if [[ ! -z $requestbody ]]; then
     curl -kH "Content-type: application/json" \
@@ -364,116 +363,6 @@ word_wrap ( ) {
     fi
     echo $currline
   fi
-}
-
-# usage: display_help_page (or can be piped through less for manpage-like
-# behavior)
-# displays extended help page for beluga-cli
-display_help_page ( ) {
-  echo
-  echo
-  center_text "\033[1mhelp for beluga-cli $VERSION_NUMBER\033[0m"
-  echo
-  echo -e "\n \033[1;4musage\033[0;1m:\033[0m \033[37mbeluga-cli\033[0m <\033[37mcommand\033[0m> [<\033[37mflags\033[0m>] [<\033[37marguments\033[0m>] [\033[37m--profile=\033[0m<\033[37mprofilename\033[0m>]\n"
-  echo -e " \033[1;4mdescription\033[0;1m:\033[0m"
-  echo
-  word_wrap $(expr $(tput cols) - 5) 5 "beluga-cli is a bash utility which uses \033[4mcurl(1)\033[0m - with the exception of the ftp command, which uses \033[4mftp(1)\033[0m - to efficiently manipulate files on an ftp origin server (like the one provided by beluga) and interact with the belugacdn api (\033[4mhttp://www.belugacdn.com/\033[0m). it can be used to quickly and easily accomplish, and/or as a step in the automation of, many tasks involving the management of objects which fit one or both of these criteria."
-  echo -e "\n \033[1;4mpossible commands\033[0;1m:\033[0m"
-  echo
-  center_text "\033[1mfile manipulation\033[0m\n"
-  echo -en "     \033[1mcp\033[0m     "
-  word_wrap $(expr $(tput cols) - 5) a-12 "copy a file to, from, or within the origin, resulting in duplicate copies at the source and destination."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mcp \033[0m[\033[37m-ips\033[0m] <\033[37mlocalpath\033[0m> <\033[37mcdn://uri\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mlocalpath\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mcdn://uri\033[0m>"
-  echo
-  echo -en "     \033[1mmv\033[0m     "
-  word_wrap $(expr $(tput cols) - 5) a-12 "move a file to, from, or within the server, so that the original copy is deleted and only the new one at the destination is kept."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mmv \033[0m[\033[37m-ips\033[0m] <\033[37mlocalpath\033[0m> <\033[37mcdn://uri\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mlocalpath\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mcdn://uri\033[0m>"
-  echo
-  echo -en "     \033[1mrm\033[0m     "
-  word_wrap $(expr $(tput cols) - 5) a-12 "delete a remote file or directory."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mrm \033[0m[\033[37m-irs\033[0m] <\033[37mcdn://uri\033[0m>"
-  echo
-  echo -en "   \033[1mmkdir\033[0m    "
-  word_wrap $(expr $(tput cols) - 5) a-12 "create a new directory on the origin server."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mmkdir\033[0m \033[0m[\033[37m-ps\033[0m] <\033[37mcdn://uri\033[0m>"
-  echo
-  echo
-  center_text "\033[1mnavigation/file discovery\033[0m"
-  echo
-  echo -ne "    \033[1mftp\033[0m     "
-  word_wrap $(expr $(tput cols) - 5) a-12 "log on to the origin server in an interactive ftp session."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mftp\033[0m"
-  echo
-  echo  -e "     \033[1mls\033[0m     briefly list the contents of a directory."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mls\033[0m [\033[37m-s\033[0m] <\033[37mcdn://uri\033[0m>"
-  echo
-  echo -ne "     \033[1mll\033[0m     "
-  word_wrap $(expr $(tput cols) - 5) a-12 "list the contents of a directory plus permissions, creation date, etc."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mll\033[0m [\033[37m-s\033[0m] <\033[37mcdn://uri\033[0m>"
-  echo
-  echo
-  center_text "\033[1mcdn utilities\033[0m\n"
-  echo -en "     \033[1miv\033[0m     "
-  word_wrap $(expr $(tput cols) - 5) a-12 "invalidate a file in the cdn's cache, so that another copy must be retrieved from the origin server."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37miv\033[0m \033[0m[\033[37m-s\033[0m] <\033[37mcdn://uri\033[0m>"
-  echo
-  echo
-  center_text "\033[1minternal tools\033[0m\n"
-  echo -en "   \033[1mupdate\033[0m   "
-  word_wrap $(expr $(tput cols) - 5) a-12 "check whether the version of beluga-cli running is the latest available; if a newer version exists, update the local file."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mupdate\033[0m"
-  echo
-  echo -en "    \033[1mhelp\033[0m    "
-  word_wrap $(expr $(tput cols) - 5) a-12 "get help about a command, or display this page if no command is specified."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[0m[<\033[37mcommand\033[0m>] \033[37mhelp\033[0m"
-  echo
-  echo -en "   \033[1mconfig\033[0m   "
-  word_wrap $(expr $(tput cols) - 5) a-12 "set up server/cdn credentials and other information; see the \`\`configuration'' section below for more details."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mconfig\033[0m"
-  echo
-  echo -e "\n \033[1;4mpossible flags\033[0;1m:\033[0m"
-  echo
-  echo -en "     \033[1m-i\033[0m     "
-  word_wrap $(expr $(tput cols) - 5) a-12 "if a remote file may be modified by the specified command, beluga-cli will request invalidation of that uri after the operation is complete."
-  echo
-  echo -en "     \033[1m-p\033[0m     "
-  word_wrap $(expr $(tput cols) - 5) a-12 "create all intermediate directories in the specified path (the destination path, when used with mv or cp commands) as needed."
-  echo
-  echo -en "     \033[1m-r\033[0m     "
-  word_wrap $(expr $(tput cols) - 5) a-12 "delete all contents of the specified directory recursively."
-  echo
-  echo -en "     \033[1m-s\033[0m     "
-  word_wrap $(expr $(tput cols) - 5) a-12 "the program will suppress output to stderr while maintaining normal output to stdout (e.g. the directory listing generated by ls)."
-  echo
-  word_wrap $(expr $(tput cols) - 5) 5 "each flag can only be used on certain commands. if a flag is used on a command where it is not standard, beluga-cli will generally print an error message but then ignore the flag and continue."
-  echo
-  echo -e " \033[1;4mconfiguration\033[0;1m:\033[0m"
-  echo
-  word_wrap $(expr $(tput cols) - 5) 5 "in order to get everything working correctly before you start using beluga-cli, you must run the command \033[37mbeluga-cli config\033[0m to define the location and credentials used for your origin, the credentials used for belugacdn, and so on."
-  echo
-  if [[ -z $cdnurl ]]; then
-    word_wrap $(expr $(tput cols) - 5) 5 "note that the \`\`origin server location'' should include the entire path used as the origin on belugacdn. if you entered an additional path in your property's settings page on beluga, include it here. if you use beluga's origin solution, this may also include a directory with your property name (e.g. X.X.X.X/cdn.your.site/)"
-  else
-    word_wrap $(expr $(tput cols) - 5) 5 "note that the \`\`origin server location'' should include the entire path used as the origin on belugacdn. if you entered an additional path in your property's settings page on beluga, include it here. if you use beluga's origin solution, this may also include a directory with your property name (e.g. X.X.X.X/$cdnurl/)"
-  fi
-  echo
-  word_wrap $(expr $(tput cols) - 5) 5 "\033[1mcaution:\033[0m your origin server username and password will be stored & transmitted as plain text, so ensure they are not used elsewhere."
-  echo
-  word_wrap $(expr $(tput cols) - 5) 5 "on the other hand, although you will be prompted for your belugacdn username and password if you choose to create a new token during the setup & configuration process, these are only used once (for basic authentication, i.e. transmitted in base64) to generate the token, and are not stored anywhere."
-  echo
-  echo -e " \033[1;4mnotes\033[0;1m:\033[0m"
-  echo
-  word_wrap $(expr $(tput cols) - 5) 5 "\033[1mprofiles:\033[0m including \033[1m--profile=<profilename>\033[0m after the primary command allows you to switch between any number of named profiles. to set up a new profile, run \033[1mbeluga-cli \033[1mconfig \033[1m--profile=<profilename>\033[0m (with the name you want to use filled in). once you have set up the credentials for a particular profile, it can be used for any other command."
-  echo
-  if [[ -z $cdnurl ]]; then
-    word_wrap $(expr $(tput cols) - 5) 5 "\033[1mremote uri formatting:\033[0m note that in all commands, remote uris should be be formatted as cdn://path. for instance, in order to download the file http://cdn.your.site/dir1/file.txt, you could run the command \033[37mbeluga-cli \033[37mcp \033[37mcdn://dir1/file.txt \033[37m~/file.txt\033[0m. as a general rule, cdn://path/to/obj corresponds to http://cdn.your.site/path/to/obj."
-  else
-    word_wrap $(expr $(tput cols) - 5) 5 "\033[1mremote uri formatting:\033[0m note that in all commands, remote uris should be formatted as cdn://path. for instance, in order to download the file http://$cdnurl/dir1/file.txt, you could run the command \033[37mbeluga-cli \033[37mcp \033[37mcdn://dir1/file.txt \033[37m~/file.txt\033[0m. as a general rule, cdn://path/to/obj corresponds to http://$cdnurl/path/to/obj."
-  fi
-  echo
-  word_wrap $(expr $(tput cols) - 5) 5 "\033[1morigin vs cdn:\033[0m when making changes to files on the origin server, note that the differences may not propagate to the cdn (and therefore become public) until you invalidate the existing uri of the modified file. this includes any operation on a uri that has already been used before: uploading a file to a new uri doesn't require invalidation, but deleting an existing one does."
-  echo
-  echo
 }
 
 # usage: invalidate <path>
@@ -823,7 +712,15 @@ primarycmd=$1
 
 if [[ $primarycmd == 'help' ]]; then
   inputflags=${inputflags//s/}
-  display_help_page | less -R
+  man -W beluga-cli 1>/dev/null 2>&1
+  if [[ $? -eq 0 ]]; then
+    man beluga-cli
+  elif [[ -e "$HOME/.beluga-cli/manpage" ]]; then
+    man "$HOME/.beluga-cli/manpage"
+  else
+    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>] [--profile=<profilename>]" >&2
+    word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
+  fi
   exit 0
 elif [[ $primarycmd == 'ftp' ]]; then
   if [[ ${#inputflags} -gt 0 ]]; then
