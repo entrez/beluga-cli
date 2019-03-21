@@ -11,8 +11,8 @@ function _spinner() {
     #           $3 spinner function pid (supplied from stop_spinner)
     # spinner from https://github.com/tlatsas/bash-spinner/blob/master/spinner.sh
 
-    local on_success="DONE"
-    local on_fail="FAIL"
+    local on_success="✓"
+    local on_fail="✖︎"
     local white="\e[1;37m"
     local green="\e[1;32m"
     local red="\e[1;31m"
@@ -138,7 +138,15 @@ if [[ "$userresponse" == "y" ]]; then
         echo -e "\033[31;1mfailed:\033[0m problem copying executable to /usr/local/bin.\nare you sure you have permission?"
         exit 1
       else
-        if [[ ! -f "$DIR/beluga-cli.1" ]]; then
+        if [[ ! -d "$HOME/.beluga-cli/man" ]]; then
+          start_spinner "creating .beluga-cli directory"
+          sleep 0.1
+          mkdir -p "$HOME/.beluga-cli/man" 1>/dev/null 2>&1
+          cmd_result=$?
+          stop_spinner $cmd_result
+        fi
+
+        if [[ ! -f "$HOME/man/beluga-cli.1" ]]; then
           currline="can't find man file. download new copy? [y/N] "
           read -n1 -sp "$currline" userresponse
           userresponse=$(echo "$userresponse" | tr [:upper:] [:lower:])
@@ -154,7 +162,7 @@ if [[ "$userresponse" == "y" ]]; then
             sleep 0.1
             man_status=$(curl -s -r 0-1 https://raw.githubusercontent.com/entrez/beluga-cli/master/man/beluga-cli.1)
             if [[ ! "$man_status" =~ "404: Not Found" ]]; then
-              curl -s "https://raw.githubusercontent.com/entrez/beluga-cli/master/man/beluga-cli.1" -o "$DIR/beluga-cli.1"
+              curl -s "https://raw.githubusercontent.com/entrez/beluga-cli/master/man/beluga-cli.1" -o "$HOME/.beluga-cli/man/beluga-cli.1"
               cmd_result=$?
             else
               cmd_result=1
@@ -165,15 +173,6 @@ if [[ "$userresponse" == "y" ]]; then
             fi
           fi
         fi
-        if [[ ! -d "$HOME/.beluga-cli" ]]; then
-          start_spinner "creating directory ~/.beluga-cli"
-          sleep 0.1
-          mkdir "$HOME/.beluga-cli" 1>/dev/null 2>&1
-          cmd_result=$?
-          stop_spinner $cmd_result
-        fi
-
-        if [[ -f "$DIR/beluga-cli.1" && ! -f "$HOME/.beluga-cli/man/beluga-cli.1" ]]; then cp "$DIR/beluga-cli.1" "$HOME/.beluga-cli/man/beluga-cli.1"; fi
 
         if [[ -f "$HOME/.beluga-cli/man/beluga-cli.1" && ! -f "/usr/local/share/man/man1/beluga-cli.1" ]]; then
           sysname="$(uname -s)"

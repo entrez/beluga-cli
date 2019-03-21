@@ -731,8 +731,8 @@ if [[ $primarycmd == 'help' ]]; then
   man -W beluga-cli 1>/dev/null 2>&1
   if [[ $? -eq 0 ]]; then
     man beluga-cli
-  elif [[ -e "$HOME/.beluga-cli/manpage" ]]; then
-    man "$HOME/.beluga-cli/manpage"
+  elif [[ -e "$HOME/.beluga-cli/man/beluga-cli.1" ]]; then
+    man "$HOME/.beluga-cli/man/beluga-cli.1"
   else
     word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [<arguments>] [--profile=<profilename>]" >&2
     word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
