@@ -152,8 +152,13 @@ if [[ "$userresponse" == "y" ]]; then
             done
             start_spinner "downloading new copy from GitHub"
             sleep 0.1
-            curl -s "https://raw.githubusercontent.com/entrez/beluga-cli/master/beluga-cli.1" -o "$DIR/beluga-cli.1"
-            cmd_result=$?
+            man_status=$(curl -s -r 0-1 https://raw.githubusercontent.com/entrez/beluga-cli/master/man/beluga-cli.1)
+            if [[ ! "$man_status" =~ "404: Not Found" ]]; then
+              curl -s "https://raw.githubusercontent.com/entrez/beluga-cli/master/man/beluga-cli.1" -o "$DIR/beluga-cli.1"
+              cmd_result=$?
+            else
+              cmd_result=1
+            fi
             stop_spinner $cmd_result
             if [[ $cmd_result -ne 0 ]]; then
               echo -e "\033[31;1mfailed:\033[0m problem downloading new copy from GitHub."
@@ -168,13 +173,13 @@ if [[ "$userresponse" == "y" ]]; then
           stop_spinner $cmd_result
         fi
 
-        if [[ -f "$DIR/beluga-cli.1" && ! -f "$HOME/.beluga-cli/beluga-cli.1" ]]; then cp "$DIR/beluga-cli.1" "$HOME/.beluga-cli/beluga-cli.1"; fi
+        if [[ -f "$DIR/beluga-cli.1" && ! -f "$HOME/.beluga-cli/man/beluga-cli.1" ]]; then cp "$DIR/beluga-cli.1" "$HOME/.beluga-cli/man/beluga-cli.1"; fi
 
-        if [[ -f "$HOME/.beluga-cli/beluga-cli.1" && ! -f "/usr/local/share/man/man1/beluga-cli.1" ]]; then
+        if [[ -f "$HOME/.beluga-cli/man/beluga-cli.1" && ! -f "/usr/local/share/man/man1/beluga-cli.1" ]]; then
           sysname="$(uname -s)"
           start_spinner "installing manpage"
           sleep 0.1
-          ln -s "$HOME/.beluga-cli/beluga-cli.1" "/usr/local/share/man/man1/beluga-cli.1"
+          ln -s "$HOME/.beluga-cli/man/beluga-cli.1" "/usr/local/share/man/man1/beluga-cli.1"
           cmd_result=$?
           if [[ cmd_result -eq 0 ]]; then
             [[ "$sysname" == "Darwin" ]] && /usr/libexec/makewhatis /usr/local/share/man || mandb -u

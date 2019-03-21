@@ -57,13 +57,13 @@ update_self ( ) {
         exit_code=$?
         msg=$(validate_curl_result $exit_code)
         if [[ $exit_code -eq 0 ]]; then
-          local man_status=$(curl -s -r 0-1 https://raw.githubusercontent.com/entrez/beluga-cli/master/beluga-cli.1)
+          local man_status=$(curl -s -r 0-1 https://raw.githubusercontent.com/entrez/beluga-cli/master/man/beluga-cli.1)
           if [[ ! "$man_status" =~ "404: Not Found" ]]; then
-            curl -s https://raw.githubusercontent.com/entrez/beluga-cli/master/beluga-cli.1 -o $HOME/.beluga-cli/beluga-cli.1
+            test -d "$HOME/.beluga-cli/man" || mkdir -p "$HOME/.beluga-cli/man"
+            curl -s https://raw.githubusercontent.com/entrez/beluga-cli/master/man/beluga-cli.1 -o $HOME/.beluga-cli/man/beluga-cli.1
             exit_code=$?
-            test -d "$HOME/.beluga-cli" || mkdir "$HOME/.beluga-cli"
             if [[ $exit_code -eq 0 && ! -e "/usr/local/share/man/man1/beluga-cli.1" ]]; then
-              ln -s "$HOME/.beluga-cli/beluga-cli.1" "/usr/local/share/man/man1/beluga-cli.1" && $(test "$(uname -s)" == "Darwin" && /usr/libexec/makewhatis /usr/local/share/man || mandb -u)
+              ln -s "$HOME/.beluga-cli/man/beluga-cli.1" "/usr/local/share/man/man1/beluga-cli.1" && $(test "$(uname -s)" == "Darwin" && /usr/libexec/makewhatis /usr/local/share/man || mandb -u)
               exit_code=$?
             fi
           else
