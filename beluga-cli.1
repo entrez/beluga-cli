@@ -8,7 +8,7 @@ beluga-cli \- manipulate files on an origin server and BelugaCDN
 \fBbeluga-cli\fR <\fIcommand\fR> [<\fIflags\fR>]... [<\fIarguments\fR>]
 [\fB--profile=\fR<\fIprofilename\fR>]
 .SH DESCRIPTION
-beluga-cli is a bash utility which uses
+\fBbeluga-cli\fR is a bash utility which uses
 .I curl(1)
 - with the exception of the ftp command, which uses
 .I ftp(1)
@@ -68,7 +68,7 @@ usage: \fBbeluga-cli iv\fR [\fB-s\fR] <cdn://\fIuri\fR>
 .SS Internal Tools
 .TP 8
 .B update
-Check whether the version of beluga-cli running is the latest available; if a newer version
+Check whether the version of \fBbeluga-cli\fR running is the latest available; if a newer version
 exists, the local copy of the script will be updated.
 .br
 usage: \fBbeluga-cli update\fR
@@ -86,13 +86,18 @@ usage: \fBbeluga-cli config\fR
 .LP
 Note that in all commands, remote/origin server URIs should be formatted as cdn://\fIpath\fR.
 For instance, in order to download the file http://cdn.your.site/dir1/file.txt, you could run
-the command beluga-cli cp cdn://dir1/file.txt ~/Downloads. As a general rule, cdn://path/to/obj
-corresponds to http://cdn.your.site/path/to/obj.
+the command
+.LP
+.RS 4
+.B beluga-cli cp cdn://dir1/file.txt ~/Downloads
+.RE
+.LP
+As a general rule, cdn://path/to/obj corresponds to http://cdn.your.site/path/to/obj.
 .LP
 .SH OPTIONS
 .TP 8
 .B -i
-If a remote file may be modified by the specified command, beluga-cli will request invalidation
+If a remote file may be modified by the specified command, \fBbeluga-cli\fR will request invalidation
 of that uri after the operation is complete.
 .TP
 .B -p
@@ -112,12 +117,12 @@ manage CDN operations and file hosting for multiple sites or applications throug
 .LP
 Many options can only be used on certain commands, as described in the usage information
 under ``commands'' above. If an option is used on a command where it is not standard,
-beluga-cli will generally print an error message but then ignore the flag and continue.
+\fBbeluga-cli\fR will generally print an error message but then ignore the flag and continue.
 .LP
 .SH CONFIGURATION
 .LP
-In order to get everything working correctly before you start using beluga-cli, you must run
-the command beluga-cli config to define the location and credentials used for your origin, the
+In order to get everything working correctly before you start using \fBbeluga-cli\fR, you must run
+the command \fBbeluga-cli config\fR to define the location and credentials used for your origin, the
 credentials used for access to the Beluga API, and so on.
 .LP
 Note that the ``origin server location'' should include the entire path used as the origin on
