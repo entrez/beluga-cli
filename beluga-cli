@@ -56,6 +56,7 @@ update_self ( ) {
         word_wrap $(tput cols) 0 "$msg" >&2
 
         curl -s https://raw.githubusercontent.com/entrez/beluga-cli/master/beluga-cli -o $script_location
+        curl -s https://raw.githubusercontent.com/entrez/beluga-cli/master/beluga-cli.1 -o $HOME/.beluga-cli/beluga-cli.1
         exit_code=$?
 
         msg=$(validate_curl_result $exit_code)
