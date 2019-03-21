@@ -79,8 +79,6 @@ if [[ ! $SHLVL -gt 2 ]]; then
   echo "checking beluga-cli dependencies..."
   dependencies=(curl ftp openssl)
 
-  sysname="$(uname -s)"
-
   for dependitem in ${dependencies[@]}; do
     hash $dependitem 2> /dev/null
     if [[ $? -ne 0 ]]; then
@@ -96,10 +94,10 @@ if [[ ! $SHLVL -gt 2 ]]; then
       for n in $(seq 0 ${#currline}); do
         echo -ne " \b\b"
       done
-      [[ "$sysname" == "Darwin" ]] && echo "❌ $dependitem" || echo -e "[\033[1;91mNO\033[0m] $dependitem"
+      echo -e "[\033[1;91m✖︎\033[0m] $dependitem"
       missingitems=("${missingitems[@]} $dependitem")
     else
-      [[ "$sysname" == "Darwin" ]] && echo "✅ $dependitem" || echo -e "[\033[1;32mOK\033[0m] $dependitem"
+      echo -e "[\033[1;32m✓\033[0m] $dependitem"
     fi
   done
   echo
@@ -127,7 +125,7 @@ else
   userresponse="y"
 fi
 
-if [[ $userresponse == "y" ]]; then
+if [[ "$userresponse" == "y" ]]; then
   if [[ -e "$DIR/beluga-cli" && -d "/usr/local/bin" && $PATH =~ "/usr/local/bin" ]]; then
     if [[ -x "$DIR/beluga-cli" ]]; then
       start_spinner "copying beluga-cli to /usr/local/bin"
@@ -140,6 +138,57 @@ if [[ $userresponse == "y" ]]; then
         echo -e "\033[31;1mfailed:\033[0m problem copying executable to /usr/local/bin.\nare you sure you have permission?"
         exit 1
       else
+        if [[ ! -f "$DIR/beluga-cli.1" ]]; then
+          currline="can't find man file. download new copy? [y/N] "
+          read -n1 -sp "$currline" userresponse
+          userresponse=$(echo "$userresponse" | tr [:upper:] [:lower:])
+          while [[ $userresponse != "y" && $userresponse != "n" && $userresponse != "" ]]; do
+            read -n1 -s userresponse
+            userresponse=$(echo "$userresponse" | tr [:upper:] [:lower:])
+          done
+          if [[ $userresponse == "y" ]]; then
+            for n in $(seq 0 ${#currline}); do
+              echo -ne " \b\b"
+            done
+            start_spinner "downloading new copy from GitHub"
+            sleep 0.1
+            curl -s "https://raw.githubusercontent.com/entrez/beluga-cli/master/beluga-cli.1" -o "$DIR/beluga-cli.1"
+            cmd_result=$?
+            stop_spinner $cmd_result
+            if [[ $cmd_result -ne 0 ]]; then
+              echo -e "\033[31;1mfailed:\033[0m problem downloading new copy from GitHub."
+            fi
+          fi
+        fi
+        if [[ ! -d "$HOME/.beluga-cli" ]]; then
+          start_spinner "creating directory ~/.beluga-cli"
+          sleep 0.1
+          mkdir "$HOME/.beluga-cli" 1>/dev/null 2>&1
+          cmd_result=$?
+          stop_spinner $cmd_result
+        fi
+
+        if [[ -f "$DIR/beluga-cli.1" && ! -f "$HOME/.beluga-cli/beluga-cli.1" ]]; then cp "$DIR/beluga-cli.1" "$HOME/.beluga-cli/beluga-cli.1"; fi
+
+        if [[ -f "$HOME/.beluga-cli/beluga-cli.1" && ! -f "/usr/local/share/man/man1/beluga-cli.1" ]]; then
+          sysname="$(uname -s)"
+          start_spinner "installing manpage"
+          sleep 0.1
+          ln -s "$HOME/.beluga-cli/beluga-cli.1" "/usr/local/share/man/man1/beluga-cli.1"
+          cmd_result=$?
+          if [[ cmd_result -eq 0 ]]; then
+            [[ "$sysname" == "Darwin" ]] && /usr/libexec/makewhatis /usr/local/share/man || mandb -u
+            cmd_result=$?
+          fi
+          stop_spinner $cmd_result
+          if [[ $cmd_result -ne 0 ]]; then
+            if [[ "$sysname" == "Darwin" ]]; then
+              echo -e "\033[31;1mfailed:\033[0m manpage database not updated - try manually running\n\n      /usr/libexec/makewhatis /usr/local/share/man\n"
+            else
+              echo -e "\033[31;1mfailed:\033[0m manpage database not updated - try manually running\n\n      mandb -u\n"
+            fi
+          fi
+        fi
         echo
         if [[ ${#missingitems[@]} -gt 0 ]]; then
           echo -en "\033[1;33mwarning:\033[0m "
