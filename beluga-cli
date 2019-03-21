@@ -71,7 +71,7 @@ update_self ( ) {
           fi
           if [[ $exit_code -ne 0 ]]; then
             word_wrap $(tput cols) 0 "$msg" >&2
-            word_wrap $(tput cols) 0 "problem updating manpage" >&2
+            word_wrap $(tput cols) 0 "\033[1;33mwarning:\033[0m problem updating manpage" >&2
             exit 5
           fi
         fi
