@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # beluga-cli
-VERSION_NUMBER="v0.6.5"
+VERSION_NUMBER="v0.7.0"
 # exit codes:
 #  0 success
 #  1 failure: operation aborted
@@ -53,12 +53,28 @@ update_self ( ) {
 
       if [[ $do_update -eq 1 ]]; then
         msg="\033[1;92msuccess:\033[0m updating beluga-cli from version ${VERSION_NUMBER:1} to version $new_version" >&2
-        word_wrap $(tput cols) 0 "$msg" >&2
-
         curl -s https://raw.githubusercontent.com/entrez/beluga-cli/master/beluga-cli -o $script_location
         exit_code=$?
-
         msg=$(validate_curl_result $exit_code)
+        if [[ $exit_code -eq 0 ]]; then
+          local man_status=$(curl -s -r 0-1 https://raw.githubusercontent.com/entrez/beluga-cli/master/man/beluga-cli.1)
+          if [[ ! "$man_status" =~ "404: Not Found" ]]; then
+            test -d "$HOME/.beluga-cli/man" || mkdir -p "$HOME/.beluga-cli/man"
+            curl -s https://raw.githubusercontent.com/entrez/beluga-cli/master/man/beluga-cli.1 -o $HOME/.beluga-cli/man/beluga-cli.1
+            exit_code=$?
+            if [[ $exit_code -eq 0 && ! -e "/usr/local/share/man/man1/beluga-cli.1" ]]; then
+              ln -s "$HOME/.beluga-cli/man/beluga-cli.1" "/usr/local/share/man/man1/beluga-cli.1" && $(test "$(uname -s)" == "Darwin" && /usr/libexec/makewhatis /usr/local/share/man || mandb -u)
+              exit_code=$?
+            fi
+          else
+            exit_code=1
+          fi
+          if [[ $exit_code -ne 0 ]]; then
+            word_wrap $(tput cols) 0 "$msg" >&2
+            word_wrap $(tput cols) 0 "\033[1;33mwarning:\033[0m problem updating manpage" >&2
+            exit 5
+          fi
+        fi
       else
         msg="\033[1;92mdone:\033[0m you already have the latest version of beluga-cli ($VERSION_NUMBER)"
         exit_code=0
@@ -133,7 +149,6 @@ beluga_api ( ) {
   elif [[ ! ( -z "$buser" || -z "$bpassword" ) ]]; then
     local authheader="Basic $(echo -n "$buser:$bpassword" | openssl base64)"
   fi
-  #echo $signstring
 
   if [[ ! -z $requestbody ]]; then
     curl -kH "Content-type: application/json" \
@@ -366,116 +381,6 @@ word_wrap ( ) {
   fi
 }
 
-# usage: display_help_page (or can be piped through less for manpage-like
-# behavior)
-# displays extended help page for beluga-cli
-display_help_page ( ) {
-  echo
-  echo
-  center_text "\033[1mhelp for beluga-cli $VERSION_NUMBER\033[0m"
-  echo
-  echo -e "\n \033[1;4musage\033[0;1m:\033[0m \033[37mbeluga-cli\033[0m <\033[37mcommand\033[0m> [<\033[37mflags\033[0m>] [<\033[37marguments\033[0m>] [\033[37m--profile=\033[0m<\033[37mprofilename\033[0m>]\n"
-  echo -e " \033[1;4mdescription\033[0;1m:\033[0m"
-  echo
-  word_wrap $(expr $(tput cols) - 5) 5 "beluga-cli is a bash utility which uses \033[4mcurl(1)\033[0m - with the exception of the ftp command, which uses \033[4mftp(1)\033[0m - to efficiently manipulate files on an ftp origin server (like the one provided by beluga) and interact with the belugacdn api (\033[4mhttp://www.belugacdn.com/\033[0m). it can be used to quickly and easily accomplish, and/or as a step in the automation of, many tasks involving the management of objects which fit one or both of these criteria."
-  echo -e "\n \033[1;4mpossible commands\033[0;1m:\033[0m"
-  echo
-  center_text "\033[1mfile manipulation\033[0m\n"
-  echo -en "     \033[1mcp\033[0m     "
-  word_wrap $(expr $(tput cols) - 5) a-12 "copy a file to, from, or within the origin, resulting in duplicate copies at the source and destination."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mcp \033[0m[\033[37m-ips\033[0m] <\033[37mlocalpath\033[0m> <\033[37mcdn://uri\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mlocalpath\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mcdn://uri\033[0m>"
-  echo
-  echo -en "     \033[1mmv\033[0m     "
-  word_wrap $(expr $(tput cols) - 5) a-12 "move a file to, from, or within the server, so that the original copy is deleted and only the new one at the destination is kept."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mmv \033[0m[\033[37m-ips\033[0m] <\033[37mlocalpath\033[0m> <\033[37mcdn://uri\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mlocalpath\033[0m> or <\033[37mcdn://uri\033[0m> <\033[37mcdn://uri\033[0m>"
-  echo
-  echo -en "     \033[1mrm\033[0m     "
-  word_wrap $(expr $(tput cols) - 5) a-12 "delete a remote file or directory."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mrm \033[0m[\033[37m-irs\033[0m] <\033[37mcdn://uri\033[0m>"
-  echo
-  echo -en "   \033[1mmkdir\033[0m    "
-  word_wrap $(expr $(tput cols) - 5) a-12 "create a new directory on the origin server."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mmkdir\033[0m \033[0m[\033[37m-ps\033[0m] <\033[37mcdn://uri\033[0m>"
-  echo
-  echo
-  center_text "\033[1mnavigation/file discovery\033[0m"
-  echo
-  echo -ne "    \033[1mftp\033[0m     "
-  word_wrap $(expr $(tput cols) - 5) a-12 "log on to the origin server in an interactive ftp session."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mftp\033[0m"
-  echo
-  echo  -e "     \033[1mls\033[0m     briefly list the contents of a directory."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mls\033[0m [\033[37m-s\033[0m] <\033[37mcdn://uri\033[0m>"
-  echo
-  echo -ne "     \033[1mll\033[0m     "
-  word_wrap $(expr $(tput cols) - 5) a-12 "list the contents of a directory plus permissions, creation date, etc."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mll\033[0m [\033[37m-s\033[0m] <\033[37mcdn://uri\033[0m>"
-  echo
-  echo
-  center_text "\033[1mcdn utilities\033[0m\n"
-  echo -en "     \033[1miv\033[0m     "
-  word_wrap $(expr $(tput cols) - 5) a-12 "invalidate a file in the cdn's cache, so that another copy must be retrieved from the origin server."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37miv\033[0m \033[0m[\033[37m-s\033[0m] <\033[37mcdn://uri\033[0m>"
-  echo
-  echo
-  center_text "\033[1minternal tools\033[0m\n"
-  echo -en "   \033[1mupdate\033[0m   "
-  word_wrap $(expr $(tput cols) - 5) a-12 "check whether the version of beluga-cli running is the latest available; if a newer version exists, update the local file."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mupdate\033[0m"
-  echo
-  echo -en "    \033[1mhelp\033[0m    "
-  word_wrap $(expr $(tput cols) - 5) a-12 "get help about a command, or display this page if no command is specified."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[0m[<\033[37mcommand\033[0m>] \033[37mhelp\033[0m"
-  echo
-  echo -en "   \033[1mconfig\033[0m   "
-  word_wrap $(expr $(tput cols) - 5) a-12 "set up server/cdn credentials and other information; see the \`\`configuration'' section below for more details."
-  word_wrap $(expr $(tput cols) - 5) 1:12-19 "usage: \033[37mbeluga-cli \033[37mconfig\033[0m"
-  echo
-  echo -e "\n \033[1;4mpossible flags\033[0;1m:\033[0m"
-  echo
-  echo -en "     \033[1m-i\033[0m     "
-  word_wrap $(expr $(tput cols) - 5) a-12 "if a remote file may be modified by the specified command, beluga-cli will request invalidation of that uri after the operation is complete."
-  echo
-  echo -en "     \033[1m-p\033[0m     "
-  word_wrap $(expr $(tput cols) - 5) a-12 "create all intermediate directories in the specified path (the destination path, when used with mv or cp commands) as needed."
-  echo
-  echo -en "     \033[1m-r\033[0m     "
-  word_wrap $(expr $(tput cols) - 5) a-12 "delete all contents of the specified directory recursively."
-  echo
-  echo -en "     \033[1m-s\033[0m     "
-  word_wrap $(expr $(tput cols) - 5) a-12 "the program will suppress output to stderr while maintaining normal output to stdout (e.g. the directory listing generated by ls)."
-  echo
-  word_wrap $(expr $(tput cols) - 5) 5 "each flag can only be used on certain commands. if a flag is used on a command where it is not standard, beluga-cli will generally print an error message but then ignore the flag and continue."
-  echo
-  echo -e " \033[1;4mconfiguration\033[0;1m:\033[0m"
-  echo
-  word_wrap $(expr $(tput cols) - 5) 5 "in order to get everything working correctly before you start using beluga-cli, you must run the command \033[37mbeluga-cli config\033[0m to define the location and credentials used for your origin, the credentials used for belugacdn, and so on."
-  echo
-  if [[ -z $cdnurl ]]; then
-    word_wrap $(expr $(tput cols) - 5) 5 "note that the \`\`origin server location'' should include the entire path used as the origin on belugacdn. if you entered an additional path in your property's settings page on beluga, include it here. if you use beluga's origin solution, this may also include a directory with your property name (e.g. X.X.X.X/cdn.your.site/)"
-  else
-    word_wrap $(expr $(tput cols) - 5) 5 "note that the \`\`origin server location'' should include the entire path used as the origin on belugacdn. if you entered an additional path in your property's settings page on beluga, include it here. if you use beluga's origin solution, this may also include a directory with your property name (e.g. X.X.X.X/$cdnurl/)"
-  fi
-  echo
-  word_wrap $(expr $(tput cols) - 5) 5 "\033[1mcaution:\033[0m your origin server username and password will be stored & transmitted as plain text, so ensure they are not used elsewhere."
-  echo
-  word_wrap $(expr $(tput cols) - 5) 5 "on the other hand, although you will be prompted for your belugacdn username and password if you choose to create a new token during the setup & configuration process, these are only used once (for basic authentication, i.e. transmitted in base64) to generate the token, and are not stored anywhere."
-  echo
-  echo -e " \033[1;4mnotes\033[0;1m:\033[0m"
-  echo
-  word_wrap $(expr $(tput cols) - 5) 5 "\033[1mprofiles:\033[0m including \033[1m--profile=<profilename>\033[0m after the primary command allows you to switch between any number of named profiles. to set up a new profile, run \033[1mbeluga-cli \033[1mconfig \033[1m--profile=<profilename>\033[0m (with the name you want to use filled in). once you have set up the credentials for a particular profile, it can be used for any other command."
-  echo
-  if [[ -z $cdnurl ]]; then
-    word_wrap $(expr $(tput cols) - 5) 5 "\033[1mremote uri formatting:\033[0m note that in all commands, remote uris should be be formatted as cdn://path. for instance, in order to download the file http://cdn.your.site/dir1/file.txt, you could run the command \033[37mbeluga-cli \033[37mcp \033[37mcdn://dir1/file.txt \033[37m~/file.txt\033[0m. as a general rule, cdn://path/to/obj corresponds to http://cdn.your.site/path/to/obj."
-  else
-    word_wrap $(expr $(tput cols) - 5) 5 "\033[1mremote uri formatting:\033[0m note that in all commands, remote uris should be formatted as cdn://path. for instance, in order to download the file http://$cdnurl/dir1/file.txt, you could run the command \033[37mbeluga-cli \033[37mcp \033[37mcdn://dir1/file.txt \033[37m~/file.txt\033[0m. as a general rule, cdn://path/to/obj corresponds to http://$cdnurl/path/to/obj."
-  fi
-  echo
-  word_wrap $(expr $(tput cols) - 5) 5 "\033[1morigin vs cdn:\033[0m when making changes to files on the origin server, note that the differences may not propagate to the cdn (and therefore become public) until you invalidate the existing uri of the modified file. this includes any operation on a uri that has already been used before: uploading a file to a new uri doesn't require invalidation, but deleting an existing one does."
-  echo
-  echo
-}
-
 # usage: invalidate <path>
 # sends an invalidation request to beluga via their api and displays the result
 #
@@ -587,12 +492,12 @@ recursive_delete ( ) {
 inputflags=''
 
 if [[ -z "$*" ]]; then
-  word_wrap $(tput cols) 1-7 "usage: beluga-cli <command> [<flags>] [<arguments>] [--profile=<profilename>]" >&2
+  word_wrap $(tput cols) 1-7 "usage: beluga-cli <command> [<options>] [<arguments>] [--profile=<profilename>]" >&2
   word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
   word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
   exit 3
 elif [[ $1 != 'rm' && $1 != 'cp' && $1 != 'mv' && $1 != 'iv' && $1 != 'ls' && $1 != 'll' && $1 != 'ftp' && $1 != 'help' && $1 != 'mkdir' && $1 != 'config' && $1 != 'update' ]]; then
-  word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>] [--profile=<profilename>]" >&2
+  word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [<arguments>] [--profile=<profilename>]" >&2
   word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
   word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
   word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m not a valid command: $1" >&2
@@ -607,10 +512,10 @@ else
       profilename=${command:10}
     elif [[ ${command:0:2} == '--' ]]; then
       inputflags=${inputflags//s/}
-      word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>] [--profile=<profilename>]" >&2
+      word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [<arguments>] [--profile=<profilename>]" >&2
       word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
       word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
-      word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m unexpected flag $command"
+      word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m unexpected option $command"
       exit 3
     elif [[ ${command:0:1} == '-' ]]; then
       inputflags+=${command/-/}
@@ -627,32 +532,32 @@ else
 
   if [[ $inputflags != $(echo $inputflags | tr -dc $legalflags ) ]]; then
     inputflags=${inputflags//s/}
-    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>] [--profile=<profilename>]" >&2
+    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [<arguments>] [--profile=<profilename>]" >&2
     word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
     word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
     if [[ $(echo $inputflags | tr -d $legalflags | awk '{print length}') -gt 1 ]]; then
-      word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m unexpected flags -$(echo $inputflags | tr -d $legalflags)"
+      word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m unexpected options -$(echo $inputflags | tr -d $legalflags)"
     else
-      word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m unexpected flag -$(echo $inputflags | tr -d $legalflags)"
+      word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m unexpected option -$(echo $inputflags | tr -d $legalflags)"
     fi
     exit 3
   elif [[ $1 == 'help' && $count -gt 0 ]]; then
     inputflags=${inputflags//s/}
-    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>] [--profile=<profilename>]" >&2
+    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [<arguments>] [--profile=<profilename>]" >&2
     word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
     word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
     word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m use <command> help, not help <command>" >&2
     exit 3
   elif [[ $count -gt 1 ]]; then
     inputflags=${inputflags//s/}
-    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>] [--profile=<profilename>]" >&2
+    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [<arguments>] [--profile=<profilename>]" >&2
     word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
     word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
     word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes multiple commands" >&2
     exit 3
   elif [[ $count -eq 0 && $1 != 'help' ]]; then
     inputflags=${inputflags//s/}
-    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<flags>] [<arguments>] [--profile=<profilename>]" >&2
+    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [<arguments>] [--profile=<profilename>]" >&2
     word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
     word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
     word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes no commands" >&2
@@ -823,13 +728,21 @@ primarycmd=$1
 
 if [[ $primarycmd == 'help' ]]; then
   inputflags=${inputflags//s/}
-  display_help_page | less -R
+  man -W beluga-cli 1>/dev/null 2>&1
+  if [[ $? -eq 0 ]]; then
+    man beluga-cli
+  elif [[ -e "$HOME/.beluga-cli/manpage" ]]; then
+    man "$HOME/.beluga-cli/manpage"
+  else
+    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [<arguments>] [--profile=<profilename>]" >&2
+    word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
+  fi
   exit 0
 elif [[ $primarycmd == 'ftp' ]]; then
   if [[ ${#inputflags} -gt 0 ]]; then
-    msg="unexpected flag: -$inputflags"
+    msg="unexpected option: -$inputflags"
     if [[ ${#inputflags} -gt 1 ]]; then
-      msg="unexpected flags: -$inputflags"
+      msg="unexpected options: -$inputflags"
     fi
 
     if [[ $inputflags =~ 's' ]]; then
@@ -877,7 +790,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
     mode="down"
   else
     if [[ $inputflags =~ 'r' ]]; then
-      word_wrap $(tput cols) 1 "unexpected flag: -r" >&2
+      word_wrap $(tput cols) 1 "unexpected option: -r" >&2
     fi
 
     curroperation=$primarycmd
@@ -1241,7 +1154,7 @@ elif [[ $primarycmd == 'mkdir' ]]; then
     illegalflags=${inputflags//"s"}
     illegalflags=${illegalflags//"p"}
     if [[ ${#illegalflags} -gt 0 ]]; then
-      word_wrap $(tput cols) 1 "unexpected flags: -$illegalflags" >&2
+      word_wrap $(tput cols) 1 "unexpected options: -$illegalflags" >&2
     fi
   fi
 
@@ -1356,9 +1269,9 @@ elif [[ $primarycmd == 'mkdir' ]]; then
 elif [[ $primarycmd == 'iv' ]]; then
   if [[ $inputflags =~ 'i' || $inputflags =~ 'r' ]]; then
     if [[ $(echo $inputflags | tr -dc 'ir' | awk '{print length}') -gt 1 ]]; then
-      word_wrap $(tput cols) 1 "unexpected flags: -$(echo $inputflags | tr -dc 'ir')" >&2
+      word_wrap $(tput cols) 1 "unexpected options: -$(echo $inputflags | tr -dc 'ir')" >&2
     else
-      word_wrap $(tput cols) 1 "unexpected flag: -$(echo $inputflags | tr -dc 'ir')" >&2
+      word_wrap $(tput cols) 1 "unexpected option: -$(echo $inputflags | tr -dc 'ir')" >&2
     fi
   fi
 
@@ -1384,9 +1297,9 @@ elif [[ $primarycmd == 'ls' || $primarycmd == 'll' ]]; then
   if [[ ! -z ${inputflags//s} ]]; then
     invalidflags=${inputflags//s}
     if [[ ${#invalidflags} -gt 1 ]]; then
-      msg="unexpected flags: -$invalidflags"
+      msg="unexpected options: -$invalidflags"
     elif [[ ${#invalidflags} -gt 0 ]]; then
-      msg="unexpected flag: -$invalidflags"
+      msg="unexpected option: -$invalidflags"
     fi
 
     word_wrap $(tput cols) 0 "$msg" >&2
