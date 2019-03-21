@@ -53,13 +53,28 @@ update_self ( ) {
 
       if [[ $do_update -eq 1 ]]; then
         msg="\033[1;92msuccess:\033[0m updating beluga-cli from version ${VERSION_NUMBER:1} to version $new_version" >&2
-        word_wrap $(tput cols) 0 "$msg" >&2
-
         curl -s https://raw.githubusercontent.com/entrez/beluga-cli/master/beluga-cli -o $script_location
-        curl -s https://raw.githubusercontent.com/entrez/beluga-cli/master/beluga-cli.1 -o $HOME/.beluga-cli/beluga-cli.1
         exit_code=$?
-
         msg=$(validate_curl_result $exit_code)
+        if [[ $exit_code -eq 0 ]]; then
+          local man_status=$(curl -s -r 0-1 https://raw.githubusercontent.com/entrez/beluga-cli/master/beluga-cli.1)
+          if [[ ! "$man_status" =~ "404: Not Found" ]]; then
+            curl -s https://raw.githubusercontent.com/entrez/beluga-cli/master/beluga-cli.1 -o $HOME/.beluga-cli/beluga-cli.1
+            exit_code=$?
+            test -d "$HOME/.beluga-cli" || mkdir "$HOME/.beluga-cli"
+            if [[ $exit_code -eq 0 && ! -e "/usr/local/share/man/man1/beluga-cli.1" ]]; then
+              ln -s "$HOME/.beluga-cli/beluga-cli.1" "/usr/local/share/man/man1/beluga-cli.1" && $(test "$(uname -s)" == "Darwin" && /usr/libexec/makewhatis /usr/local/share/man || mandb -u)
+              exit_code=$?
+            fi
+          else
+            exit_code=1
+          fi
+          if [[ $exit_code -ne 0 ]]; then
+            word_wrap $(tput cols) 0 "$msg" >&2
+            word_wrap $(tput cols) 0 "problem updating manpage" >&2
+            exit 5
+          fi
+        fi
       else
         msg="\033[1;92mdone:\033[0m you already have the latest version of beluga-cli ($VERSION_NUMBER)"
         exit_code=0
