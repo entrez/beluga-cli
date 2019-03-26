@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # beluga-cli
-VERSION_NUMBER="v0.7.1"
+VERSION_NUMBER="v0.7.2"
 # exit codes:
 #  0 success
 #  1 failure: operation aborted
@@ -53,6 +53,7 @@ update_self ( ) {
 
       if [[ $do_update -eq 1 ]]; then
         msg="\033[1;92msuccess:\033[0m updating beluga-cli from version ${VERSION_NUMBER:1} to version $new_version" >&2
+        word_wrap $(tput cols) 0 "$msg" >&2
         curl -s https://raw.githubusercontent.com/entrez/beluga-cli/master/beluga-cli -o $script_location
         exit_code=$?
         msg=$(validate_curl_result $exit_code)
