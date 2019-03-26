@@ -62,7 +62,7 @@ update_self ( ) {
             test -d "$HOME/.beluga-cli/man" || mkdir -p "$HOME/.beluga-cli/man"
             curl -s https://raw.githubusercontent.com/entrez/beluga-cli/master/man/beluga-cli.1 -o $HOME/.beluga-cli/man/beluga-cli.1
             exit_code=$?
-            if [[ $exit_code -eq 0 && ! -e "/usr/local/share/man/man1/beluga-cli.1" ]]; then
+            if [[ $exit_code -eq 0 && ! -e "/usr/local/share/man/man1/beluga-cli.1" && ":$(man --path):" =~ ":/usr/local/share/man:" ]]; then
               ln -s "$HOME/.beluga-cli/man/beluga-cli.1" "/usr/local/share/man/man1/beluga-cli.1" && $(test "$(uname -s)" == "Darwin" && /usr/libexec/makewhatis /usr/local/share/man || mandb -u)
               exit_code=$?
             fi
@@ -489,6 +489,7 @@ recursive_delete ( ) {
   fi
 }
 
+noOverwrite=false
 inputflags=''
 
 if [[ -z "$*" ]]; then
@@ -510,6 +511,8 @@ else
       let count+=1
     elif [[ ${command:0:10} == "--profile=" ]]; then
       profilename=${command:10}
+    elif [[ ${command:0:14} == "--no-overwrite" ]]; then
+      noOverwrite=true
     elif [[ ${command:0:2} == '--' ]]; then
       inputflags=${inputflags//s/}
       word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [<arguments>] [--profile=<profilename>]" >&2
@@ -1119,12 +1122,18 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
         local+="$remotefile"
       fi
 
+      if [[ "$primarycmd" != 'rm' && -e "$local" && "$noOverwrite" == true ]]; then
+        msg="\033[31;1mfailed:\033[0m operation not completed [destination already exists]"
+        word_wrap $(tput cols) 0 $msg >&2
+        exit 1
+      fi
+
       if [[ $curroperation == "cp" ]]; then
         msg="\033[1;92mdownloading:\033[0m http://$cdnurl/${remote// /%20} -> $local"
         curl "ftp://$serverdefault/$remote" -o "$local" 2> /dev/null
         result=$?
-      elif [[ $curroperation == "mv" ]]; then
-        if [[ $primarycmd == 'rm' ]]; then
+      elif [[ "$curroperation" == "mv" ]]; then
+        if [[ "$primarycmd" == "rm" ]]; then
           msg="\033[1;92mdeleting:\033[0m http://$cdnurl/${remote// /%20}"
         else
           msg="\033[1;92mmoving:\033[0m http://$cdnurl/${remote// /%20} -> $local"
