@@ -1045,6 +1045,15 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
     fi
 
     if [[ $mode == "up" ]]; then
+      if [[ "$noOverwrite" == true ]]; then
+        curl -s -r 0-75  "ftp://$serverdefault/$remote" >/dev/null
+        if [[ $? -eq 0 ]]; then
+          msg="\033[31;1mfailed:\033[0m $local -> http://$cdnurl/${remote// /%20}"$'\n'"destination exists: http://$cdnurl/${remote// /%20}"
+          display_message "$msg" >&2
+          exit 1
+        fi
+      fi
+
       if [[ $curroperation == "cp" ]]; then
         msg="\033[1;92muploading:\033[0m $local -> http://$cdnurl/${remote// /%20}"
         if [[ $inputflags =~ "p" ]]; then
@@ -1123,8 +1132,8 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
       fi
 
       if [[ "$primarycmd" != 'rm' && -e "$local" && "$noOverwrite" == true ]]; then
-        msg="\033[31;1mfailed:\033[0m operation not completed [destination already exists]"
-        word_wrap $(tput cols) 0 $msg >&2
+        msg="\033[31;1mfailed:\033[0m http://$cdnurl/${remote// /%20} -> $local"$'\n'"destination exists: $local"
+        display_message "$msg" >&2
         exit 1
       fi
 
