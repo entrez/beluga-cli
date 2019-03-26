@@ -493,12 +493,12 @@ noOverwrite=false
 inputflags=''
 
 if [[ -z "$*" ]]; then
-  word_wrap $(tput cols) 1-7 "usage: beluga-cli <command> [<options>] [<arguments>] [--profile=<profilename>]" >&2
+  word_wrap $(tput cols) 1-7 "usage: beluga-cli <command> [<options>] [--profile=<profilename>] [--no-overwrite] [<arguments>]" >&2
   word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
   word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
   exit 3
 elif [[ $1 != 'rm' && $1 != 'cp' && $1 != 'mv' && $1 != 'iv' && $1 != 'ls' && $1 != 'll' && $1 != 'ftp' && $1 != 'help' && $1 != 'mkdir' && $1 != 'config' && $1 != 'update' ]]; then
-  word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [<arguments>] [--profile=<profilename>]" >&2
+  word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [--profile=<profilename>] [--no-overwrite] [<arguments>]" >&2
   word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
   word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
   word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m not a valid command: $1" >&2
@@ -515,7 +515,7 @@ else
       noOverwrite=true
     elif [[ ${command:0:2} == '--' ]]; then
       inputflags=${inputflags//s/}
-      word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [<arguments>] [--profile=<profilename>]" >&2
+      word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [--profile=<profilename>] [--no-overwrite] [<arguments>]" >&2
       word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
       word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
       word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m unexpected option $command"
@@ -535,7 +535,7 @@ else
 
   if [[ $inputflags != $(echo $inputflags | tr -dc $legalflags ) ]]; then
     inputflags=${inputflags//s/}
-    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [<arguments>] [--profile=<profilename>]" >&2
+    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [--profile=<profilename>] [--no-overwrite] [<arguments>]" >&2
     word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
     word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
     if [[ $(echo $inputflags | tr -d $legalflags | awk '{print length}') -gt 1 ]]; then
@@ -546,21 +546,21 @@ else
     exit 3
   elif [[ $1 == 'help' && $count -gt 0 ]]; then
     inputflags=${inputflags//s/}
-    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [<arguments>] [--profile=<profilename>]" >&2
+    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [--profile=<profilename>] [--no-overwrite] [<arguments>]" >&2
     word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
     word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
     word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m use <command> help, not help <command>" >&2
     exit 3
   elif [[ $count -gt 1 ]]; then
     inputflags=${inputflags//s/}
-    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [<arguments>] [--profile=<profilename>]" >&2
+    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [--profile=<profilename>] [--no-overwrite] [<arguments>]" >&2
     word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
     word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
     word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes multiple commands" >&2
     exit 3
   elif [[ $count -eq 0 && $1 != 'help' ]]; then
     inputflags=${inputflags//s/}
-    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [<arguments>] [--profile=<profilename>]" >&2
+    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [--profile=<profilename>] [--no-overwrite] [<arguments>]" >&2
     word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
     word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
     word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes no commands" >&2
@@ -737,7 +737,7 @@ if [[ $primarycmd == 'help' ]]; then
   elif [[ -e "$HOME/.beluga-cli/man/beluga-cli.1" ]]; then
     man "$HOME/.beluga-cli/man/beluga-cli.1"
   else
-    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [<arguments>] [--profile=<profilename>]" >&2
+    word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [--profile=<profilename>] [--no-overwrite] [<arguments>]" >&2
     word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
   fi
   exit 0
@@ -798,7 +798,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
 
     curroperation=$primarycmd
     if [[ "${args[0]}" == 'help' || ${#args[@]} -gt 2 || ${#args[@]} -lt 2 || ( "${args[0]:0:6}" != 'cdn://' && "${args[1]:0:6}" != 'cdn://' ) ]]; then
-      word_wrap $(tput cols) 1:0-7 "usage: beluga-cli $primarycmd [-is] <localpath> <cdn://uri> or <cdn://uri> <localpath> or <cdn://uri> <cdn://uri>" >&2
+      word_wrap $(tput cols) 1:0-7 "usage: beluga-cli $primarycmd [-is] [--no-overwrite] <localpath> <cdn://uri> or <cdn://uri> <localpath> or <cdn://uri> <cdn://uri>" >&2
       if [[ "${args[0]}" == 'help' ]]; then
         if [[ $curroperation == 'mv' ]]; then
           word_wrap $(tput cols) 0 "moves a file to, from, or within the origin server: of the source and destination, one or both should be remote uris, formatted with cdn:// preceding the path." >&2
