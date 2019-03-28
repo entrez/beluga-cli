@@ -10,6 +10,12 @@ VERSION_NUMBER="v0.7.2"
 #  4 missing config
 #  5 partial failure
 
+emphasis_text="\033[37;1m"
+warn_text="\033[33;1m"
+success_text="\033[92;1m"
+error_text="\033[31;1m"
+reset_text_color="\033[0m"
+
 update_self ( ) {
   local msg="checking for new version of beluga-cli"
   word_wrap $(tput cols) 0 "$msg" >&2
@@ -22,7 +28,7 @@ update_self ( ) {
   if [[ $exit_code -ne 0 ]]; then
     msg=$(validate_curl_result $exit_code)
   elif [[ $item_head =~ "404: Not Found" ]]; then
-    msg="\033[31;1mfailed:\033[0m operation not completed [HTTP 404]"
+    msg="${error_text}failed:${reset_text_color} operation not completed [HTTP 404]"
     exit_code=1
   else
     local new_version=""
@@ -37,7 +43,7 @@ update_self ( ) {
     done
 
     if [[ $new_version == "" ]]; then
-      msg="\033[31;1mfailed:\033[0m operation not completed [can't find version #]"
+      msg="${error_text}failed:${reset_text_color} operation not completed [can't find version #]"
       exit_code=1
     else
       local do_update=0
@@ -52,7 +58,7 @@ update_self ( ) {
       done
 
       if [[ $do_update -eq 1 ]]; then
-        msg="\033[1;92msuccess:\033[0m updating beluga-cli from version ${VERSION_NUMBER:1} to version $new_version" >&2
+        msg="${success_text}success:${reset_text_color} updating beluga-cli from version ${VERSION_NUMBER:1} to version $new_version" >&2
         word_wrap $(tput cols) 0 "$msg" >&2
         curl -s https://raw.githubusercontent.com/entrez/beluga-cli/master/beluga-cli -o $script_location
         exit_code=$?
@@ -72,12 +78,12 @@ update_self ( ) {
           fi
           if [[ $exit_code -ne 0 ]]; then
             word_wrap $(tput cols) 0 "$msg" >&2
-            word_wrap $(tput cols) 0 "\033[1;33mwarning:\033[0m problem updating manpage" >&2
+            word_wrap $(tput cols) 0 "${warn_text}warning:${reset_text_color} problem updating manpage" >&2
             exit 5
           fi
         fi
       else
-        msg="\033[1;92mdone:\033[0m you already have the latest version of beluga-cli ($VERSION_NUMBER)"
+        msg="${success_text}done:${reset_text_color} you already have the latest version of beluga-cli ($VERSION_NUMBER)"
         exit_code=0
       fi
     fi
@@ -226,7 +232,7 @@ validate_curl_result ( ) {
   local res=$1
 
   if [[ ! $res -eq 0 ]]; then
-    local msg="\033[31;1mfailed:\033[0m operation not completed [error $res"
+    local msg="${error_text}failed:${reset_text_color} operation not completed [error $res"
     if [[ $res -eq 78 ]]; then
       msg+=": file not found"
     elif [[ $res -eq 6 ]]; then
@@ -274,7 +280,7 @@ validate_curl_result ( ) {
     echo -e "$msg"
     return 1
   else
-    echo -e "\033[1;92mdone\033[0m"
+    echo -e "${success_text}done${reset_text_color}"
     return 0
   fi
 }
@@ -393,26 +399,26 @@ word_wrap ( ) {
 invalidate ( ) {
   local myurl=http://$cdnurl/$1
 
-  msg="\033[1;92minvalidating:\033[0m $myurl"
+  msg="${success_text}invalidating:${reset_text_color} $myurl"
   display_message "$msg" >&2
 
   resp=$(beluga_api --token-id=$tokenid --token-secret=$tokensecret --request-method=POST --request-path=/api/cdn/v2/invalidations --request-body="{\"urls\":[{\"url\":\"$myurl\"}], \"limit-records\": \"50000\"}")
   result=$?
 
   if [[ $resp =~ "TokenID is not numeric" ]]; then
-    validationresult="\033[31;1mfailed:\033[0m operation not completed [invalid token id]"
+    validationresult="${error_text}failed:${reset_text_color} operation not completed [invalid token id]"
     exitstatus=1
   elif [[ $resp =~ "password mismatch" ]]; then
-    validationresult="\033[31;1mfailed:\033[0m operation not completed [user/password incorrect]"
+    validationresult="${error_text}failed:${reset_text_color} operation not completed [user/password incorrect]"
     exitstatus=1
   elif [[ $resp =~ "token lookup failed" ]]; then
-    validationresult="\033[31;1mfailed:\033[0m operation not completed [token id lookup failed]"
+    validationresult="${error_text}failed:${reset_text_color} operation not completed [token id lookup failed]"
     exitstatus=1
   elif [[ $resp =~ "token validation failed" ]]; then
-    validationresult="\033[31;1mfailed:\033[0m operation not completed [token validation failed]"
+    validationresult="${error_text}failed:${reset_text_color} operation not completed [token validation failed]"
     exitstatus=1
   elif [[ $resp =~ '"httpMessage":"Unauthorized"' ]]; then
-    validationresult="\033[31;1mfailed:\033[0m operation not completed [401 unauthorized]"
+    validationresult="${error_text}failed:${reset_text_color} operation not completed [401 unauthorized]"
     exitstatus=1
   else
     curlstatus=$(echo $resp | cut -d',' -f3 | tr -d '"' | cut -d':' -f2)
@@ -423,13 +429,13 @@ invalidate ( ) {
 
   if [[ $exitstatus -eq 0 ]]; then
     if [[ $curlstatus == "pending" ]]; then
-      word_wrap $(tput cols) 0 "request \033[1;92mpending\033[0m" >&2
+      word_wrap $(tput cols) 0 "request ${success_text}pending${reset_text_color}" >&2
       return 0
     elif [[ $curlstatus == "previously-pending" ]]; then
-      word_wrap $(tput cols) 0 "request \033[1;33mpreviously pending\033[0m" >&2
+      word_wrap $(tput cols) 0 "request ${warn_text}previously pending${reset_text_color}" >&2
       return 2
     elif [[ $curlstatus == "failure" ]]; then
-      word_wrap $(tput cols) 0 "request \033[1;91mfailed\033[0m" >&2
+      word_wrap $(tput cols) 0 "request ${error_text}failed${reset_text_color}" >&2
       return 1
     else
       word_wrap $(tput cols) 0 "request $curlstatus" >&2
@@ -465,7 +471,7 @@ recursive_delete ( ) {
     let totalnum++
 
     if [[ $lresult -ne 0 ]]; then
-      display_message "\033[31;1merror\033[0m deleting cdn://$path/" >&2
+      display_message "${error_text}error${reset_text_color} deleting cdn://$path/" >&2
       let failnum++
     fi
   else
@@ -474,7 +480,7 @@ recursive_delete ( ) {
     let totalnum++
 
     if [[ $lresult -ne 0 ]]; then
-      display_message "\033[31;1merror\033[0m deleting cdn://$path" >&2
+      display_message "${error_text}error${reset_text_color} deleting cdn://$path" >&2
       let failnum++
     elif [[ $inputflags =~ 'i' ]]; then
       invalidate $path
@@ -496,13 +502,13 @@ inputflags=''
 if [[ -z "$*" ]]; then
   word_wrap $(tput cols) 1-7 "usage: beluga-cli <command> [<options>] [--profile=<profilename>] [--no-overwrite] [<arguments>]" >&2
   word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
-  word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
+  word_wrap $(tput cols) 0 "for more detailed help, run ${emphasis_text}beluga-cli ${emphasis_text}help${reset_text_color}." >&2
   exit 3
 elif [[ $1 != 'rm' && $1 != 'cp' && $1 != 'mv' && $1 != 'iv' && $1 != 'ls' && $1 != 'll' && $1 != 'ftp' && $1 != 'help' && $1 != 'mkdir' && $1 != 'config' && $1 != 'update' ]]; then
   word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [--profile=<profilename>] [--no-overwrite] [<arguments>]" >&2
   word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
-  word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
-  word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m not a valid command: $1" >&2
+  word_wrap $(tput cols) 0 "for more detailed help, run ${emphasis_text}beluga-cli ${emphasis_text}help${reset_text_color}." >&2
+  word_wrap $(tput cols) 0 "${error_text}illegal input:${reset_text_color} not a valid command: $1" >&2
   exit 3
 else
   count=0
@@ -518,8 +524,8 @@ else
       inputflags=${inputflags//s/}
       word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [--profile=<profilename>] [--no-overwrite] [<arguments>]" >&2
       word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
-      word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
-      word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m unexpected option $command"
+      word_wrap $(tput cols) 0 "for more detailed help, run ${emphasis_text}beluga-cli ${emphasis_text}help${reset_text_color}." >&2
+      word_wrap $(tput cols) 0 "${error_text}illegal input:${reset_text_color} unexpected option $command"
       exit 3
     elif [[ ${command:0:1} == '-' ]]; then
       inputflags+=${command/-/}
@@ -538,33 +544,33 @@ else
     inputflags=${inputflags//s/}
     word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [--profile=<profilename>] [--no-overwrite] [<arguments>]" >&2
     word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
-    word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
+    word_wrap $(tput cols) 0 "for more detailed help, run ${emphasis_text}beluga-cli ${emphasis_text}help${reset_text_color}." >&2
     if [[ $(echo $inputflags | tr -d $legalflags | awk '{print length}') -gt 1 ]]; then
-      word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m unexpected options -$(echo $inputflags | tr -d $legalflags)"
+      word_wrap $(tput cols) 0 "${error_text}illegal input:${reset_text_color} unexpected options -$(echo $inputflags | tr -d $legalflags)"
     else
-      word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m unexpected option -$(echo $inputflags | tr -d $legalflags)"
+      word_wrap $(tput cols) 0 "${error_text}illegal input:${reset_text_color} unexpected option -$(echo $inputflags | tr -d $legalflags)"
     fi
     exit 3
   elif [[ $1 == 'help' && $count -gt 0 ]]; then
     inputflags=${inputflags//s/}
     word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [--profile=<profilename>] [--no-overwrite] [<arguments>]" >&2
     word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
-    word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
-    word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m use <command> help, not help <command>" >&2
+    word_wrap $(tput cols) 0 "for more detailed help, run ${emphasis_text}beluga-cli ${emphasis_text}help${reset_text_color}." >&2
+    word_wrap $(tput cols) 0 "${error_text}illegal input:${reset_text_color} use <command> help, not help <command>" >&2
     exit 3
   elif [[ $count -gt 1 ]]; then
     inputflags=${inputflags//s/}
     word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [--profile=<profilename>] [--no-overwrite] [<arguments>]" >&2
     word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
-    word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
-    word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes multiple commands" >&2
+    word_wrap $(tput cols) 0 "for more detailed help, run ${emphasis_text}beluga-cli ${emphasis_text}help${reset_text_color}." >&2
+    word_wrap $(tput cols) 0 "${error_text}illegal input:${reset_text_color} input [beluga-cli $@] includes multiple commands" >&2
     exit 3
   elif [[ $count -eq 0 && $1 != 'help' ]]; then
     inputflags=${inputflags//s/}
     word_wrap $(tput cols) 1:0-7 "usage: beluga-cli <command> [<options>] [--profile=<profilename>] [--no-overwrite] [<arguments>]" >&2
     word_wrap $(tput cols) 1-10 "commands: cp, mv, rm, mkdir, ftp, ls, ll, iv, update, help, config" >&2
-    word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
-    word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes no commands" >&2
+    word_wrap $(tput cols) 0 "for more detailed help, run ${emphasis_text}beluga-cli ${emphasis_text}help${reset_text_color}." >&2
+    word_wrap $(tput cols) 0 "${error_text}illegal input:${reset_text_color} input [beluga-cli $@] includes no commands" >&2
     exit 3
   fi
 fi
@@ -610,11 +616,11 @@ if [[ -e "$HOME/.beluga-cli/credentials" && $1 != "config" && $1 != "update" ]];
 
   if [[ -z $cdnurl || -z $serverloc || -z $suser || -z $spass || -z $tokenid || -z $tokensecret ]]; then
     if [[ $profilename == "default" ]]; then
-      word_wrap $(tput cols) 0 "\033[31;1merror:\033[0m bad credentials" >&2
-      word_wrap $(tput cols) 0 "run \033[37;1mbeluga-cli \033[37;1mconfig\033[0m, or \033[37;1mbeluga-cli \033[37;1mhelp\033[0m for more info." >&2
+      word_wrap $(tput cols) 0 "${error_text}error:${reset_text_color} bad credentials" >&2
+      word_wrap $(tput cols) 0 "run ${emphasis_text}beluga-cli ${emphasis_text}config${reset_text_color}, or ${emphasis_text}beluga-cli ${emphasis_text}help${reset_text_color} for more info." >&2
     else
-      word_wrap $(tput cols) 0 "\033[31;1merror:\033[0m bad credentials [$profilename]" >&2
-      word_wrap $(tput cols) 0 "run \033[37;1mbeluga-cli \033[37;1mconfig \033[37;1m--profile=$profilename\033[0m, or \033[37;1mbeluga-cli \033[37;1mhelp\033[0m for more info." >&2
+      word_wrap $(tput cols) 0 "${error_text}error:${reset_text_color} bad credentials [$profilename]" >&2
+      word_wrap $(tput cols) 0 "run ${emphasis_text}beluga-cli ${emphasis_text}config ${emphasis_text}--profile=$profilename${reset_text_color}, or ${emphasis_text}beluga-cli ${emphasis_text}help${reset_text_color} for more info." >&2
     fi
     exit 4
   fi
@@ -642,10 +648,10 @@ fi
 
 if [[ $1 != "help" && $1 != "config" && $1 != "update" ]]; then
   if [[ ! -d "$HOME/.beluga-cli" ]]; then
-    word_wrap $(tput cols) 0 "\033[31;1merror:\033[0m missing config directory ~/.beluga-cli. run \033[1mbeluga-cli config\033[0m to configure defaults, or \033[1mbeluga-cli \033[1mhelp\033[0m for more information." >&2
+    word_wrap $(tput cols) 0 "${error_text}error:${reset_text_color} missing config directory ~/.beluga-cli. run ${emphasis_text}beluga-cli config${reset_text_color} to configure defaults, or ${emphasis_text}beluga-cli ${emphasis_text}help${reset_text_color} for more information." >&2
     exit 4
   elif [[ ! -e "$HOME/.beluga-cli/credentials" ]]; then
-    word_wrap $(tput cols) 0 "\033[31;1merror:\033[0m missing config file ~/.beluga-cli/credentials. run \033[1mbeluga-cli config\033[0m to configure defaults, or \033[1mbeluga-cli \033[1mhelp\033[0m for more information." >&2
+    word_wrap $(tput cols) 0 "${error_text}error:${reset_text_color} missing config file ~/.beluga-cli/credentials. run ${emphasis_text}beluga-cli config${reset_text_color} to configure defaults, or ${emphasis_text}beluga-cli ${emphasis_text}help${reset_text_color} for more information." >&2
     exit 4
   fi
 elif [[ $1 == "config" ]]; then
@@ -656,12 +662,12 @@ elif [[ $1 == "config" ]]; then
   if [[ ! -e "$HOME/.beluga-cli/credentials" ]]; then
     touch "$HOME/.beluga-cli/credentials"
     if [[ ! ( -r "$HOME/.beluga-cli/credentials" && -w "$HOME/.beluga-cli/credentials" ) ]]; then
-      chmod +rw-x "$HOME/.beluga-cli/credentials" 2>/dev/null || (word_wrap $(tput cols) 0 "\033[31;1merror:\033[0m can't change read/write bits for $HOME/.beluga-cli/credentials" >&2; exit 4)
+      chmod +rw-x "$HOME/.beluga-cli/credentials" 2>/dev/null || (word_wrap $(tput cols) 0 "${error_text}error:${reset_text_color} can't change read/write bits for $HOME/.beluga-cli/credentials" >&2; exit 4)
     fi
   fi
   echo
-  word_wrap $(tput cols) 0 "\033[31;1mcaution:\033[0m your origin server username and password will be stored and transmitted as plain text, so ensure they are not used elsewhere." >&2
-  word_wrap $(tput cols) 0 "run \033[1mbeluga-cli \033[1mhelp\033[0m and see the section 'configuration' for more information on what to enter here." >&2
+  word_wrap $(tput cols) 0 "${error_text}caution:${reset_text_color} your origin server username and password will be stored and transmitted as plain text, so ensure they are not used elsewhere." >&2
+  word_wrap $(tput cols) 0 "run ${emphasis_text}beluga-cli ${emphasis_text}help${reset_text_color} and see the section 'configuration' for more information on what to enter here." >&2
   echo
   read -p "origin server location: ftp://" serverlocation </dev/tty
   read -p "origin server username: " susername </dev/tty
@@ -689,13 +695,13 @@ elif [[ $1 == "config" ]]; then
     exit_code=$?
 
     if [[ $resp =~ "password mismatch" ]]; then
-      word_wrap $(tput cols) 0 "\033[31;1mfailed:\033[0m token not created [user/password incorrect]" >&2
+      word_wrap $(tput cols) 0 "${error_text}failed:${reset_text_color} token not created [user/password incorrect]" >&2
       exit 1
     elif [[ $exit_code -ne 0 ]]; then
-      word_wrap $(tput cols) 0 "\033[31;1mfailed:\033[0m token not created [unknown error $exit_code]" >&2
+      word_wrap $(tput cols) 0 "${error_text}failed:${reset_text_color} token not created [unknown error $exit_code]" >&2
       exit 1
     else
-      echo -e "\033[1;92mdone\033[0m"
+      echo -e "${success_text}done${reset_text_color}"
       echo
       id=$(echo $resp | cut -d',' -f4 | tr -d '"' | cut -d':' -f2 | awk '{$1=$1};1')
       secret=$(echo $resp | cut -d',' -f1 | tr -d '"' | cut -d':' -f2 | awk '{$1=$1};1')
@@ -760,10 +766,10 @@ elif [[ $primarycmd == 'ftp' ]]; then
     word_wrap $(tput cols) 1:0-7 "usage: beluga-cli ftp" >&2
     if [[ "${args[0]}" == 'help' ]]; then
       word_wrap $(tput cols) 0 "logs on to the origin server in an interactive ftp session." >&2
-      word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
+      word_wrap $(tput cols) 0 "for more detailed help, run ${emphasis_text}beluga-cli ${emphasis_text}help${reset_text_color}." >&2
       exit 0
     elif [[ ${#args[@]} -gt 0 ]]; then
-      word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too many args" >&2
+      word_wrap $(tput cols) 0 "${error_text}illegal input:${reset_text_color} input [beluga-cli $@] includes too many args" >&2
       exit 3
     fi
   fi
@@ -776,14 +782,14 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
       word_wrap $(tput cols) 1:0-7 "usage: beluga-cli rm [-isr] <cdn://uri>" >&2
       if [[ "${args[0]}" == 'help' ]]; then
         word_wrap $(tput cols) 0 "deletes a file from the origin server." >&2
-        word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
+        word_wrap $(tput cols) 0 "for more detailed help, run ${emphasis_text}beluga-cli ${emphasis_text}help${reset_text_color}." >&2
         exit 0
       elif [[ ${#args[@]} -lt 1 ]]; then
-        word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too few args" >&2
+        word_wrap $(tput cols) 0 "${error_text}illegal input:${reset_text_color} input [beluga-cli $@] includes too few args" >&2
       elif [[ ${#args[@]} -gt 1 ]]; then
-        word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too many args" >&2
+        word_wrap $(tput cols) 0 "${error_text}illegal input:${reset_text_color} input [beluga-cli $@] includes too many args" >&2
       elif [[ "${args[0]:0:6}" != 'cdn://' ]]; then
-        word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes no cdn:// uri" >&2
+        word_wrap $(tput cols) 0 "${error_text}illegal input:${reset_text_color} input [beluga-cli $@] includes no cdn:// uri" >&2
       fi
       exit 3
     fi
@@ -806,14 +812,14 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
         else
           word_wrap $(tput cols) 0 "copies a file to, from, or within the origin server: of the source and destination, one or both should be remote uris, formatted with cdn:// preceding the path." >&2
         fi
-        word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
+        word_wrap $(tput cols) 0 "for more detailed help, run ${emphasis_text}beluga-cli ${emphasis_text}help${reset_text_color}." >&2
         exit 0
       elif [[ ${#args[@]} -lt 2 ]]; then
-        word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too few args" >&2
+        word_wrap $(tput cols) 0 "${error_text}illegal input:${reset_text_color} input [beluga-cli $@] includes too few args" >&2
       elif [[ ( "${args[0]:0:6}" != 'cdn://' && "${args[1]:0:6}" != 'cdn://' ) ]]; then
-        word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes no cdn:// uri" >&2
+        word_wrap $(tput cols) 0 "${error_text}illegal input:${reset_text_color} input [beluga-cli $@] includes no cdn:// uri" >&2
       elif [[ ${#args[@]} -gt 2 ]]; then
-        word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too many args" >&2
+        word_wrap $(tput cols) 0 "${error_text}illegal input:${reset_text_color} input [beluga-cli $@] includes too many args" >&2
       fi
       exit 3
     fi
@@ -848,7 +854,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
 
   if [[ $mode == "rename" ]]; then
     if [[ -z $source ]]; then
-      msg="\033[31;1mfailed:\033[0m http://$cdnurl/ -> http://$cdnurl/${destination// /%20}"$'\n'"is a directory: http://$cdnurl/"
+      msg="${error_text}failed:${reset_text_color} http://$cdnurl/ -> http://$cdnurl/${destination// /%20}"$'\n'"is a directory: http://$cdnurl/"
       display_message "$msg" >&2
       exit 1
     elif [[ ${source:$(expr ${#source} - 1)} == '/' ]]; then
@@ -859,7 +865,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
     result=$?
 
     if [[ $result -eq 0 ]]; then
-      msg="\033[31;1mfailed:\033[0m http://$cdnurl/${source// /%20}/ -> http://$cdnurl/${destination// /%20}"$'\n'"is a directory: http://$cdnurl/${source// /%20}/"
+      msg="${error_text}failed:${reset_text_color} http://$cdnurl/${source// /%20}/ -> http://$cdnurl/${destination// /%20}"$'\n'"is a directory: http://$cdnurl/${source// /%20}/"
       display_message "$msg" >&2
       exit 1
     else
@@ -880,11 +886,11 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
       fi
 
       if [[ $curroperation == 'mv' ]]; then
-        msg="\033[1;92mmoving:\033[0m http://$cdnurl/${source// /%20} -> http://$cdnurl/${destination// /%20}"
+        msg="${success_text}moving:${reset_text_color} http://$cdnurl/${source// /%20} -> http://$cdnurl/${destination// /%20}"
         curl "ftp://$serverdefault/$source" -Q "-DELE $sourcefile" > "$HOME/.beluga-cli/.curltmp" 2> /dev/null
         result=$?
       elif [[ $curroperation == 'cp' ]]; then
-        msg="\033[1;92mcopying:\033[0m http://$cdnurl/${source// /%20} -> http://$cdnurl/${destination// /%20}"
+        msg="${success_text}copying:${reset_text_color} http://$cdnurl/${source// /%20} -> http://$cdnurl/${destination// /%20}"
         curl "ftp://$serverdefault/$source" > "$HOME/.beluga-cli/.curltmp" 2> /dev/null
         result=$?
       fi
@@ -935,7 +941,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
         remote+='/'
       fi
 
-      msg="\033[31;1mfailed:\033[0m $local -> http://$cdnurl/${remote// /%20}"$'\n'"does not exist: $local"
+      msg="${error_text}failed:${reset_text_color} $local -> http://$cdnurl/${remote// /%20}"$'\n'"does not exist: $local"
       display_message "$msg" >&2
 
       exit 1
@@ -949,7 +955,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
         remote="$remote/"
       fi
 
-      msg="\033[31;1mfailed:\033[0m $local/ -> http://$cdnurl/${remote// /%20}"$'\n'"is a directory: $local/"
+      msg="${error_text}failed:${reset_text_color} $local/ -> http://$cdnurl/${remote// /%20}"$'\n'"is a directory: $local/"
 
       display_message "$msg" >&2
       exit 1
@@ -969,21 +975,21 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
         if [[ $mode == "down" ]]; then
           if [[ $primarycmd == 'rm' ]]; then
             if [[ $inputflags =~ 'r' ]]; then
-              msg="\033[1;92mdeleting:\033[0m http://$cdnurl/${remote// /%20}/"
+              msg="${success_text}deleting:${reset_text_color} http://$cdnurl/${remote// /%20}/"
               display_message "$msg"
 
               recursive_delete $remote
               result=$?
 
               if [[ $result -eq 0 ]]; then
-                msg="\033[1;92mdone\033[0m"
+                msg="${success_text}done${reset_text_color}"
               elif [[ $result -eq 5 ]]; then
-                msg="\033[1;33mpartly \033[1;33mfailed:\033[0m some files not deleted"
+                msg="${warn_text}partly ${warn_text}failed:${reset_text_color} some files not deleted"
               else
-                msg="\033[31;1mfailed:\033[0m http://$cdnurl/${remote// /%20}/ not deleted"
+                msg="${error_text}failed:${reset_text_color} http://$cdnurl/${remote// /%20}/ not deleted"
               fi
             elif [[ -z "$dircontents" ]]; then
-              msg="\033[1;92mdeleting:\033[0m http://$cdnurl/${remote// /%20}/"
+              msg="${success_text}deleting:${reset_text_color} http://$cdnurl/${remote// /%20}/"
               display_message "$msg"
               curl -l "ftp://$serverdefault/" -Q "-RMD $remote" > /dev/null 2> /dev/null
               result=$?
@@ -992,13 +998,13 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
               word_wrap $(tput cols) 0  "$validationresult" >&2
               exit $result
             else
-              msg="\033[1;92mdeleting:\033[0m http://$cdnurl/${remote// /%20}/"
+              msg="${success_text}deleting:${reset_text_color} http://$cdnurl/${remote// /%20}/"
               display_message "$msg" >&2
-              msg="\033[31;1mfailed:\033[0m operation not completed [directory not empty]"
+              msg="${error_text}failed:${reset_text_color} operation not completed [directory not empty]"
               result=1
             fi
           else
-            msg="\033[31;1mfailed:\033[0m http://$cdnurl/${remote// /%20}/ -> $local"$'\n'"is a directory: http://$cdnurl/${remote// /%20}/"
+            msg="${error_text}failed:${reset_text_color} http://$cdnurl/${remote// /%20}/ -> $local"$'\n'"is a directory: http://$cdnurl/${remote// /%20}/"
             result=1
           fi
 
@@ -1025,7 +1031,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
           if [[ $remoteendchar == '/' ]]; then
             # if the user included a / where there shouldn't be one,
             # tell them the verbatim file doesn't exist (even if it otherwise might)
-            msg="\033[31;1mfailed:\033[0m http://$cdnurl/${remote// /%20}/ -> $local"$'\n'"does not exist: $remote/"
+            msg="${error_text}failed:${reset_text_color} http://$cdnurl/${remote// /%20}/ -> $local"$'\n'"does not exist: $remote/"
             display_message "$msg" >&2
             exit 1
           fi
@@ -1036,9 +1042,9 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
         remote=${local##*/}
       elif [[ $mode == "down" ]]; then
         if [[ $primarycmd == 'rm' ]]; then
-          msg="\033[31;1mfailed:\033[0m deleting http://$cdnurl/"$'\n'"is a directory: http://$cdnurl/"
+          msg="${error_text}failed:${reset_text_color} deleting http://$cdnurl/"$'\n'"is a directory: http://$cdnurl/"
         else
-          msg="\033[31;1mfailed:\033[0m http://$cdnurl/ -> $local"$'\n'"is a directory: http://$cdnurl/"
+          msg="${error_text}failed:${reset_text_color} http://$cdnurl/ -> $local"$'\n'"is a directory: http://$cdnurl/"
         fi
         display_message "$msg" >&2
         exit 1
@@ -1049,14 +1055,14 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
       if [[ "$noOverwrite" == true ]]; then
         curl -s -r 0-75  "ftp://$serverdefault/$remote" >/dev/null
         if [[ $? -eq 0 ]]; then
-          msg="\033[31;1mfailed:\033[0m $local -> http://$cdnurl/${remote// /%20}"$'\n'"destination exists: http://$cdnurl/${remote// /%20}"
+          msg="${error_text}failed:${reset_text_color} $local -> http://$cdnurl/${remote// /%20}"$'\n'"destination exists: http://$cdnurl/${remote// /%20}"
           display_message "$msg" >&2
           exit 1
         fi
       fi
 
       if [[ $curroperation == "cp" ]]; then
-        msg="\033[1;92muploading:\033[0m $local -> http://$cdnurl/${remote// /%20}"
+        msg="${success_text}uploading:${reset_text_color} $local -> http://$cdnurl/${remote// /%20}"
         if [[ $inputflags =~ "p" ]]; then
           curl -T "$local" "ftp://$serverdefault/$remote" --ftp-create-dirs 2> /dev/null
         else
@@ -1064,7 +1070,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
         fi
         result=$?
       elif [[ $curroperation == "mv" ]]; then
-        msg="\033[1;92mmoving:\033[0m $local -> http://$cdnurl/${remote// /%20}"
+        msg="${success_text}moving:${reset_text_color} $local -> http://$cdnurl/${remote// /%20}"
         if [[ $inputflags =~ "p" ]]; then
           curl -T "$local" "ftp://$serverdefault/$remote" --ftp-create-dirs 2> /dev/null
         else
@@ -1095,7 +1101,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
               if [[ $inputflags =~ "p" ]]; then
                 mkdir -p "$local"
               else
-                msg="\033[31;1mfailed:\033[0m http://$cdnurl/${remote// /%20} -> $local"$'\n'"no such directory: $local"
+                msg="${error_text}failed:${reset_text_color} http://$cdnurl/${remote// /%20} -> $local"$'\n'"no such directory: $local"
                 display_message "$msg" >&2
                 exit 1
               fi
@@ -1111,7 +1117,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
               if [[ $inputflags =~ "p" ]]; then
                 mkdir -p "${local%/*}"
               else
-                msg="\033[31;1mfailed:\033[0m http://$cdnurl/${remote// /%20} -> $local"$'\n'"no such directory: ${local%/*}"
+                msg="${error_text}failed:${reset_text_color} http://$cdnurl/${remote// /%20} -> $local"$'\n'"no such directory: ${local%/*}"
                 display_message "$msg" >&2
                 exit 1
               fi
@@ -1123,7 +1129,7 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
           if [[ $inputflags =~ "p" ]]; then
             mkdir -p "$local"
           else
-            msg="\033[31;1mfailed:\033[0m http://$cdnurl/${remote// /%20} -> $local"$'\n'"no such directory: $local"
+            msg="${error_text}failed:${reset_text_color} http://$cdnurl/${remote// /%20} -> $local"$'\n'"no such directory: $local"
             display_message "$msg" >&2
             exit 1
           fi
@@ -1133,20 +1139,20 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
       fi
 
       if [[ "$primarycmd" != 'rm' && -e "$local" && "$noOverwrite" == true ]]; then
-        msg="\033[31;1mfailed:\033[0m http://$cdnurl/${remote// /%20} -> $local"$'\n'"destination exists: $local"
+        msg="${error_text}failed:${reset_text_color} http://$cdnurl/${remote// /%20} -> $local"$'\n'"destination exists: $local"
         display_message "$msg" >&2
         exit 1
       fi
 
       if [[ $curroperation == "cp" ]]; then
-        msg="\033[1;92mdownloading:\033[0m http://$cdnurl/${remote// /%20} -> $local"
+        msg="${success_text}downloading:${reset_text_color} http://$cdnurl/${remote// /%20} -> $local"
         curl "ftp://$serverdefault/$remote" -o "$local" 2> /dev/null
         result=$?
       elif [[ "$curroperation" == "mv" ]]; then
         if [[ "$primarycmd" == "rm" ]]; then
-          msg="\033[1;92mdeleting:\033[0m http://$cdnurl/${remote// /%20}"
+          msg="${success_text}deleting:${reset_text_color} http://$cdnurl/${remote// /%20}"
         else
-          msg="\033[1;92mmoving:\033[0m http://$cdnurl/${remote// /%20} -> $local"
+          msg="${success_text}moving:${reset_text_color} http://$cdnurl/${remote// /%20} -> $local"
         fi
         curl "ftp://$serverdefault/$remote" -Q "-DELE $remotefile" -o "$local" 2> /dev/null
         result=$?
@@ -1181,19 +1187,19 @@ elif [[ $primarycmd == 'mkdir' ]]; then
     word_wrap $(tput cols) 1:0-7 "usage: beluga-cli $primarycmd [-s] <cdn://uri>" >&2
     if [[ "${args[0]}" == 'help' ]]; then
       word_wrap $(tput cols) 0 "creates a new directory on the origin server." >&2
-      word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
+      word_wrap $(tput cols) 0 "for more detailed help, run ${emphasis_text}beluga-cli ${emphasis_text}help${reset_text_color}." >&2
     elif [[ ${#args[@]} -lt 1 ]]; then
-      word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too few args" >&2
+      word_wrap $(tput cols) 0 "${error_text}illegal input:${reset_text_color} input [beluga-cli $@] includes too few args" >&2
     elif [[ ${#args[@]} -gt 1 ]]; then
-      word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too many args" >&2
+      word_wrap $(tput cols) 0 "${error_text}illegal input:${reset_text_color} input [beluga-cli $@] includes too many args" >&2
     elif [[ "${args[0]:0:6}" != 'cdn://' ]]; then
-      word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes no cdn:// uri" >&2
+      word_wrap $(tput cols) 0 "${error_text}illegal input:${reset_text_color} input [beluga-cli $@] includes no cdn:// uri" >&2
     fi
     exit 3
   else
     destination="${args[0]:6}"
 
-    display_message "\033[1;92mcreating \033[1;92mdirectory:\033[0m http://$cdnurl/${destination// /%20}" >&2
+    display_message "${success_text}creating ${success_text}directory:${reset_text_color} http://$cdnurl/${destination// /%20}" >&2
 
     if [[ ${destination:$(expr ${#destination} - 1)} == "/" ]]; then
       destination=${destination:0:$(expr ${#destination} - 1)}
@@ -1203,7 +1209,7 @@ elif [[ $primarycmd == 'mkdir' ]]; then
     result=$?
 
     if [[ $result -eq 0 ]]; then
-      msg="\033[31;1mfailed:\033[0m operation not completed [dir already exists]"
+      msg="${error_text}failed:${reset_text_color} operation not completed [dir already exists]"
       word_wrap $(tput cols) 0 $msg >&2
     else
       if [[ $inputflags =~ "p" ]]; then
@@ -1255,7 +1261,7 @@ elif [[ $primarycmd == 'mkdir' ]]; then
               result=$?
               if [[ $result -ne 0 ]]; then
                 if [[ $counter -gt 0 ]]; then
-                  display_message "\033[1;33mfailed:\033[0m could not create http://$cdnurl/$alreadyexists/" >&2
+                  display_message "${warn_text}failed:${reset_text_color} could not create http://$cdnurl/$alreadyexists/" >&2
                   exit 5
                 else
                   word_wrap $(tput cols) 0 $(validate_curl_result $result) >&2
@@ -1271,7 +1277,7 @@ elif [[ $primarycmd == 'mkdir' ]]; then
           done
         fi
 
-        word_wrap $(tput cols) 0 "\033[1;92mdone\033[0m" >&2
+        word_wrap $(tput cols) 0 "${success_text}done${reset_text_color}" >&2
         exit 0
       else
         curl "ftp://$serverdefault/" -Q "-MKD $destination" > /dev/null 2> /dev/null
@@ -1298,13 +1304,13 @@ elif [[ $primarycmd == 'iv' ]]; then
     word_wrap $(tput cols) 1:0-7 "usage: beluga-cli $primarycmd [-s] <cdn://uri>" >&2
     if [[ "${args[0]}" == 'help' ]]; then
       word_wrap $(tput cols) 0 "invalidates a file so it must be retrieved again from the origin server." >&2
-      word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
+      word_wrap $(tput cols) 0 "for more detailed help, run ${emphasis_text}beluga-cli ${emphasis_text}help${reset_text_color}." >&2
     elif [[ ${#args[@]} -lt 1 ]]; then
-      word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too few args" >&2
+      word_wrap $(tput cols) 0 "${error_text}illegal input:${reset_text_color} input [beluga-cli $@] includes too few args" >&2
     elif [[ ${#args[@]} -gt 1 ]]; then
-      word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too many args" >&2
+      word_wrap $(tput cols) 0 "${error_text}illegal input:${reset_text_color} input [beluga-cli $@] includes too many args" >&2
     elif [[ "${args[0]:0:6}" != 'cdn://' ]]; then
-      word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes no cdn:// uri" >&2
+      word_wrap $(tput cols) 0 "${error_text}illegal input:${reset_text_color} input [beluga-cli $@] includes no cdn:// uri" >&2
     fi
     exit 3
   else
@@ -1329,13 +1335,13 @@ elif [[ $primarycmd == 'ls' || $primarycmd == 'll' ]]; then
     word_wrap $(tput cols) 1:0-7 "usage: beluga-cli $primarycmd [-s] <cdn://uri>" >&2
     if [[ "${args[0]}" == 'help' ]]; then
       word_wrap $(tput cols) 0 "retrieves and lists the contents of a specified directory on the origin." >&2
-      word_wrap $(tput cols) 0 "for more detailed help, run \033[1mbeluga-cli \033[1mhelp\033[0m." >&2
+      word_wrap $(tput cols) 0 "for more detailed help, run ${emphasis_text}beluga-cli ${emphasis_text}help${reset_text_color}." >&2
     elif [[ ${#args[@]} -lt 1 ]]; then
-      word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too few args" >&2
+      word_wrap $(tput cols) 0 "${error_text}illegal input:${reset_text_color} input [beluga-cli $@] includes too few args" >&2
     elif [[ ${#args[@]} -gt 1 ]]; then
-      word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes too many args" >&2
+      word_wrap $(tput cols) 0 "${error_text}illegal input:${reset_text_color} input [beluga-cli $@] includes too many args" >&2
     elif [[ "${args[0]:0:6}" != 'cdn://' ]]; then
-      word_wrap $(tput cols) 0 "\033[31;1millegal input:\033[0m input [beluga-cli $@] includes no cdn:// uri" >&2
+      word_wrap $(tput cols) 0 "${error_text}illegal input:${reset_text_color} input [beluga-cli $@] includes no cdn:// uri" >&2
     fi
     exit 3
   fi
@@ -1350,7 +1356,7 @@ elif [[ $primarycmd == 'ls' || $primarycmd == 'll' ]]; then
 
   myurl=http://$cdnurl/${remote// /%20}
 
-  msg="\033[1;92mlisting contents of\033[0m $myurl"
+  msg="${success_text}listing contents of${reset_text_color} $myurl"
 
   display_message "$msg" >&2
 
@@ -1366,7 +1372,7 @@ elif [[ $primarycmd == 'ls' || $primarycmd == 'll' ]]; then
   exitstatus=$?
 
   if [[ $exitstatus -eq 0 ]]; then
-    if [[ ! $inputflags =~ 's' ]]; then echo -e "\033[1;92msuccess\033[0m" >&2; fi
+    if [[ ! $inputflags =~ 's' ]]; then echo -e "${success_text}success${reset_text_color}" >&2; fi
     echo -e "$listing"
   else
     word_wrap $(tput cols) 0  "$validationresult" >&2
