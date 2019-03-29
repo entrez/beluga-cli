@@ -1,11 +1,11 @@
 .\" Manpage for beluga-cli
 .\" Report errors or typos at https://www.github.com/entrez/beluga-cli/issues
 .\" Copyright 2018, 2019 Michael Meyer <michael@vitormedia.com>
-.TH beluga-cli 1 "20 Mar 2019" "0.7.2" "Beluga CLI Manual"
+.TH beluga-cli 1 "20 Mar 2019" "0.7.3" "Beluga CLI Manual"
 .SH NAME
 beluga-cli \- manipulate files on an origin server and BelugaCDN
 .SH SYNOPSIS
-\fBbeluga-cli\fR <\fIcommand\fR> [<\fIoptions\fR>]... [\fB--profile=\fR<\fIprofilename\fR>] [\fB--no-overwrite\fR] [<\fIarguments\fR>]
+\fBbeluga-cli\fR <\fIcommand\fR> [<\fIoptions\fR>]... [\fB--profile=\fR<\fIprofilename\fR>] [\fB--no-color\fR] [<\fIarguments\fR>]
 .SH DESCRIPTION
 \fBbeluga-cli\fR is a bash utility which uses
 .I curl(1)
@@ -22,60 +22,60 @@ objects which fit one or both of these criteria.
 Copy a file to, from, or within the origin, resulting in duplicate copies at the source and
 destination.
 .br
-usage: \fBbeluga-cli cp\fR [\fB-ips\fR] [\fB--no-overwrite\fR] <\fIlocalpath\fR> <cdn://\fIuri\fR> or <cdn://\fIuri\fR>
+usage: \fBbeluga-cli cp\fR [\fB-ips\fR] [\fB--no-overwrite\fR] [\fB--profile=\fR<\fIprofilename\fR>] [\fB--no-color\fR] <\fIlocalpath\fR> <cdn://\fIuri\fR> or <cdn://\fIuri\fR>
 <\fIlocalpath\fR> or <cdn://\fIuri\fR> <cdn://\fIuri\fR>
 .TP
 .B mv
 Move a file to, from, or within the server, so that the original copy is deleted and only the new
 one at the destination is kept.
 .br
-usage: \fBbeluga-cli mv\fR [\fB-ips\fR] [\fB--no-overwrite\fR] <\fIlocalpath\fR> <cdn://\fIuri\fR> or <cdn://\fIuri\fR>
+usage: \fBbeluga-cli mv\fR [\fB-ips\fR] [\fB--no-overwrite\fR] [\fB--profile=\fR<\fIprofilename\fR>] [\fB--no-color\fR] <\fIlocalpath\fR> <cdn://\fIuri\fR> or <cdn://\fIuri\fR>
 <\fIlocalpath\fR> or <cdn://\fIuri\fR> <cdn://\fIuri\fR>
 .TP
 .B rm
 Delete a remote file or directory.
 .br
-usage: \fBbeluga-cli rm\fR [\fB-irs\fR] <cdn://\fIuri\fR>
+usage: \fBbeluga-cli rm\fR [\fB-irs\fR] [\fB--profile=\fR<\fIprofilename\fR>] [\fB--no-color\fR] <cdn://\fIuri\fR>
 .TP
 .B mkdir
 Create a new directory on the origin server.
 .br
-usage: \fBbeluga-cli mkdir\fR [\fB-ps\fR] <cdn://\fIuri\fR>
+usage: \fBbeluga-cli mkdir\fR [\fB-ps\fR] [\fB--profile=\fR<\fIprofilename\fR>] [\fB--no-color\fR] <cdn://\fIuri\fR>
 .SS Navigation and File Discovery
 .TP 8
 .B ftp
 Log on to the origin server in an interactive ftp session.
 .br
-usage: \fBbeluga-cli ftp\fR
+usage: \fBbeluga-cli ftp\fR [\fB--profile=\fR<\fIprofilename\fR>]
 .TP
 .B ls
 Briefly list the contents of a directory.
 .br
-usage: \fBbeluga-cli ls\fR [\fB-s\fR] <cdn://\fIuri\fR>
+usage: \fBbeluga-cli ls\fR [\fB-s\fR] [\fB--profile=\fR<\fIprofilename\fR>] [\fB--no-color\fR] <cdn://\fIuri\fR>
 .TP
 .B ll
 List the contents of a directory plus permissions, creation date, etc.
 .br
-usage: \fBbeluga-cli ll\fR [\fB-s\fR] <cdn://\fIuri\fR>
+usage: \fBbeluga-cli ll\fR [\fB-s\fR] [\fB--profile=\fR<\fIprofilename\fR>] [\fB--no-color\fR] <cdn://\fIuri\fR>
 .SS CDN Utilities
 .TP 8
 .B iv
 Invalidate a cached file on the CDN, forcing it to retrieve a fresh copy from the origin
 server the next time it is needed.
 .br
-usage: \fBbeluga-cli iv\fR [\fB-s\fR] <cdn://\fIuri\fR>
+usage: \fBbeluga-cli iv\fR [\fB-s\fR] [\fB--profile=\fR<\fIprofilename\fR>] [\fB--no-color\fR] <cdn://\fIuri\fR>
 .SS Internal Tools
 .TP 8
 .B update
 Check whether the version of \fBbeluga-cli\fR running is the latest available; if a newer version
 exists, the local copy of the script will be updated.
 .br
-usage: \fBbeluga-cli update\fR
+usage: \fBbeluga-cli update\fR [\fB--no-color\fR]
 .TP
 .B help
 Get help about a command, or display this page if no command is specified.
 .br
-usage: \fBbeluga-cli\fR [<\fIcommand\fR>] \fBhelp\fR
+usage: \fBbeluga-cli\fR [<\fIcommand\fR>] \fBhelp\fR [\fB--no-color\fR]
 .TP
 .B config
 Set up origin server & CDN credentials and other information; see the ``configuration'' section
@@ -117,6 +117,9 @@ manage CDN operations and file hosting for multiple sites or applications throug
 .B --no-overwrite
 The operation will fail if the destination (whether local or on the origin) refers to an
 already-existing file.
+.TP
+.B --no-color
+Output will not include the usual text decoration (color/bolding/etc).
 .LP
 Many options can only be used on certain commands, as described in the usage information
 under ``commands'' above. If an option is used on a command where it is not standard,

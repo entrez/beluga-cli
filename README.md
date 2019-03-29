@@ -1,11 +1,11 @@
 # beluga-cli
 
-v0.7.2
+v0.7.3
 
 ## overview
 
 ### usage
-`beluga-cli <command> [<options>]... [--profile=<profilename>] [--no-overwrite] [<arguments>]`
+`beluga-cli <command> [<options>]... [--profile=<profilename>] [--no-color] [<arguments>]`
 
 ### description
 beluga-cli is a bash utility which uses [curl](https://curl.haxx.se/) - with the exception of the `ftp` command, which uses [ftp](https://www.gnu.org/software/inetutils/)\* - to efficiently manipulate files on an ftp origin server (like the one provided by beluga) and interact with the [belugacdn](http://www.belugacdn.com/) api.  it can be used to quickly and easily accomplish, and/or as a step in the automation of, many tasks involving the management of objects which fit one or both of these criteria.
@@ -29,40 +29,40 @@ on the other hand, although you will be prompted for your belugacdn username and
 ### file manipulation
 
 **cp** : copy a file to, from, or within the origin, resulting in duplicate copies at the source and destination.  
-usage: `beluga-cli cp [-ips] [--no-overwrite] <localpath> <cdn://uri> or <cdn://uri> <localpath> or <cdn://uri> <cdn://uri>`
+usage: `beluga-cli cp [-ips] [--no-overwrite] [--profile=<profilename>] [--no-color] <localpath> <cdn://uri> or <cdn://uri> <localpath> or <cdn://uri> <cdn://uri>`
 
 **mv** : move a file to, from, or within the server, deleting the original and keeping the new copy.  
-usage: `beluga-cli mv [-ips] [--no-overwrite] <localpath> <cdn://uri> or <cdn://uri> <localpath> or <cdn://uri> <cdn://uri>`
+usage: `beluga-cli mv [-ips] [--no-overwrite] [--profile=<profilename>] [--no-color] <localpath> <cdn://uri> or <cdn://uri> <localpath> or <cdn://uri> <cdn://uri>`
 
 **rm** : delete a remote file or directory.  
-usage: `beluga-cli rm [-irs] <cdn://uri>`
+usage: `beluga-cli rm [-irs] [--profile=<profilename>] [--no-color] <cdn://uri>`
 
 **mkdir** : create a new directory on the origin server.  
-usage: `beluga-cli mkdir [-ps] <cdn://uri>`
+usage: `beluga-cli mkdir [-ps] [--profile=<profilename>] [--no-color] <cdn://uri>`
 
 ### navigation & file discovery
 
 **ftp** : log on to the origin server in an interactive ftp session.  
-usage: `beluga-cli ftp`
+usage: `beluga-cli ftp [--profile=<profilename>]`
 
 **ls** : briefly list the contents of a directory.  
-usage: `beluga-cli ls [-s] <cdn://uri>`
+usage: `beluga-cli ls [-s] [--profile=<profilename>] [--no-color] <cdn://uri>`
 
 **ll** : list the contents of a directory plus permissions, creation date, etc.  
-usage: `beluga-cli ll [-s] <cdn://uri>`
+usage: `beluga-cli ll [-s] [--profile=<profilename>] [--no-color] <cdn://uri>`
 
 ### cdn utilities
 
 **iv** : invalidate a file in the cdn's cache, so that another copy must be retrieved from the origin server.  
-usage: `beluga-cli iv [-s] <cdn://uri>`
+usage: `beluga-cli iv [-s] [--profile=<profilename>] [--no-color] <cdn://uri>`
 
 ### internal tools
 
 **update** : check whether the version of beluga-cli running is the latest available; if a newer version exists, update the local file.  
-usage: `beluga-cli update`
+usage: `beluga-cli update [--no-color]`
 
 **help** : get help about a command, or display the general help page (similar to this readme) if no command is specified.  
-usage: `beluga-cli [<command>] help`
+usage: `beluga-cli [<command>] help [--no-color]`
 
 **config** : set up server/CDN credentials and other information; see the ['configuration' section](#configuration) for more details.  
 usage: `beluga-cli config`
@@ -80,6 +80,8 @@ usage: `beluga-cli config`
 **--profile=<_profilename_\>** : create and switch between any number of named profiles. see the [profiles](#profiles) section below.
 
 **--no-overwrite** : the operation will fail if the destination (whether local or on the origin) refers to an already-existing file.
+
+**--no-color** : output will not include the usual text decoration (color/bolding/etc).
 
 each option can only be used on certain commands (see [above](#possible-commands)). if an option is used on a command where it is not standard, beluga-cli will generally print an error message but then ignore the option and continue.
 
