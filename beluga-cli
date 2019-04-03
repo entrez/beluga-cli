@@ -849,11 +849,11 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
 
     if [[ $local == '.' ]]; then
       local="$PWD"
-    elif [[ ${local:0:2} == './' ]]; then
-      local="$PWD/${local:2}"
+    elif [[ ${local::2} == './' ]]; then
+      local="$PWD/${local#*/}"
     elif [[ ${local::3} == '../' ]]; then
       local="${PWD%/*}/${local#*/}"
-    elif [[ ${local:0:1} == '~' ]]; then
+    elif [[ ${local::2} == '~/' ]]; then
       local="${local/\~/$HOME}"
     fi
   fi
