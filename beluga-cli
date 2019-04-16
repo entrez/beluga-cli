@@ -408,6 +408,12 @@ invalidate ( ) {
   if [[ $resp =~ "TokenID is not numeric" ]]; then
     validationresult="${ERROR_TEXT}failed:${RESET_TEXT_COLOR} operation not completed [invalid token id]"
     exitstatus=1
+  elif [[ $resp =~ "Gateway Time-out" ]]; then
+    validationresult="${ERROR_TEXT}failed:${RESET_TEXT_COLOR} operation not completed [gateway timeout]"
+    exitstatus=1
+  elif [[ $resp =~ "Error" ]]; then
+    validationresult="${ERROR_TEXT}failed:${RESET_TEXT_COLOR} operation not completed [internal server error]"
+    exitstatus=1
   elif [[ $resp =~ "password mismatch" ]]; then
     validationresult="${ERROR_TEXT}failed:${RESET_TEXT_COLOR} operation not completed [user/password incorrect]"
     exitstatus=1
