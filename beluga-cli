@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
+# vim:et:ts=2:sw=2
 
 # beluga-cli
-VERSION_NUMBER="v0.7.4"
+VERSION_NUMBER="v0.7.5"
 # exit codes:
 #  0 success
 #  1 failure: operation aborted
@@ -897,13 +898,14 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
         fi
       fi
 
+      tempfile=$(mktemp)
       if [[ $curroperation == 'mv' ]]; then
         msg="${SUCCESS_TEXT}moving:${RESET_TEXT_COLOR} http://$cdnurl/${source// /%20} -> http://$cdnurl/${destination// /%20}"
-        curl "ftp://$serverdefault/$source" -Q "-DELE $sourcefile" > "$HOME/.beluga-cli/.curltmp" 2> /dev/null
+        curl "ftp://$serverdefault/$source" -Q "-DELE $sourcefile" > "$tempfile" 2> /dev/null
         result=$?
       elif [[ $curroperation == 'cp' ]]; then
         msg="${SUCCESS_TEXT}copying:${RESET_TEXT_COLOR} http://$cdnurl/${source// /%20} -> http://$cdnurl/${destination// /%20}"
-        curl "ftp://$serverdefault/$source" > "$HOME/.beluga-cli/.curltmp" 2> /dev/null
+        curl "ftp://$serverdefault/$source" > "$tempfile" 2> /dev/null
         result=$?
       fi
 
@@ -911,9 +913,9 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
 
       if [[ $result -eq 0 ]]; then
         if [[ $inputflags =~ "p" ]]; then
-          curl -T "$HOME/.beluga-cli/.curltmp" "ftp://$serverdefault/$destination" --ftp-create-dirs 2> /dev/null
+          curl -T "$tempfile" "$ftp://$serverdefault/$destination" --ftp-create-dirs 2> /dev/null
         else
-          curl -T "$HOME/.beluga-cli/.curltmp" "ftp://$serverdefault/$destination" 2> /dev/null
+          curl -T "$tempfile" "ftp://$serverdefault/$destination" 2> /dev/null
         fi
         result=$?
         rm "$HOME/.beluga-cli/.curltmp"
