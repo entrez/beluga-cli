@@ -913,12 +913,12 @@ elif [[ $primarycmd == 'cp' || $primarycmd == 'mv' || $primarycmd == 'rm' ]]; th
 
       if [[ $result -eq 0 ]]; then
         if [[ $inputflags =~ "p" ]]; then
-          curl -T "$tempfile" "$ftp://$serverdefault/$destination" --ftp-create-dirs 2> /dev/null
+          curl -T "$tempfile" "ftp://$serverdefault/$destination" --ftp-create-dirs 2> /dev/null
         else
           curl -T "$tempfile" "ftp://$serverdefault/$destination" 2> /dev/null
         fi
         result=$?
-        rm "$HOME/.beluga-cli/.curltmp"
+        rm "$tempfile"
       fi
 
       msg=$(validate_curl_result $result)
